@@ -106,17 +106,15 @@ def get_sys_version():
 def get_disk_info():
     global IP, TIME
     # disk: total, usage, free, %'''
-    p = subprocess.Popen("df -h --total /|grep total|awk -F' ' '{print $2,$3,$4,$5}'", shell=True,
-                         stdout=subprocess.PIPE)
-    tmp = p.stdout.readline().strip().split()
+    disk = psutil.disk_usage('/')
     info = {
-        'total': tmp[0],
-        'used': tmp[1],
-        'free': tmp[2],
-        'percent': tmp[3]
+        'total': '%.2f' % (disk.total/1073741824),
+        'used': '%.2f' % (disk.used/1073741824),
+        'free':  '%.2f' % (disk.free/1073741824),
+        'percent': disk.percent
     }
     conn.zadd("system_monitor:collection:disk:" + IP,
-              {json.dumps({"time": TIME, "value": str(tmp[1])}): TIME})
+              {json.dumps({"time": TIME, "value": str('%.2f' % (disk.used/1073741824))}): TIME})
     return info
 
 
