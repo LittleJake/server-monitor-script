@@ -17,6 +17,8 @@ conn = redis.Redis(host=HOST, password=PASSWORD, port=PORT, retry_on_timeout=10)
 TIME = math.floor(time.time())
 TIMEOUT = 259200
 
+DISK_EXCLUDE = ['/run', '/sys', '/boot', '/dev', '/proc']
+
 
 def get_network():
     network = {'RX': {
@@ -79,20 +81,20 @@ def get_cpu_temp():
 def get_mem_info():
     global IP, TIME
     info = {'Mem': {
-        'total': '%.2f' % (psutil.virtual_memory().total / 1024 / 1024),
-        'used': '%.2f' % (psutil.virtual_memory().used / 1024 / 1024),
-        'free': '%.2f' % (psutil.virtual_memory().free / 1024 / 1024),
+        'total': '%.2f' % (psutil.virtual_memory().total*1.0/1048576),
+        'used': '%.2f' % (psutil.virtual_memory().used*1.0/1048576),
+        'free': '%.2f' % (psutil.virtual_memory().free*1.0/1048576),
     }, 'Swap': {
-        'total': '%.2f' % (psutil.swap_memory().total / 1024 / 1024),
-        'used': '%.2f' % (psutil.swap_memory().used / 1024 / 1024),
-        'free': '%.2f' % (psutil.swap_memory().free / 1024 / 1024)
+        'total': '%.2f' % (psutil.swap_memory().total*1.0/1048576),
+        'used': '%.2f' % (psutil.swap_memory().used*1.0/1048576),
+        'free': '%.2f' % (psutil.swap_memory().free*1.0/1048576)
     }}
 
     conn.zadd("system_monitor:collection:memory:" + IP,
-              {json.dumps({"time": TIME, "value": str('%.2f' % (psutil.virtual_memory().used / 1024 / 1024))}): TIME})
+              {json.dumps({"time": TIME, "value": str('%.2f' % (psutil.virtual_memory().used / 1048576))}): TIME})
 
     conn.zadd("system_monitor:collection:swap:" + IP,
-              {json.dumps({"time": TIME, "value": str('%.2f' % (psutil.swap_memory().used / 1024 / 1024))}): TIME})
+              {json.dumps({"time": TIME, "value": str('%.2f' % (psutil.swap_memory().used / 1048576))}): TIME})
     return info
 
 
@@ -103,19 +105,42 @@ def get_sys_version():
     return p.stdout.readline().strip()
 
 
+def get_disk_partitions():
+    parts = psutil.disk_partitions(True)
+    result = []
+    for part in parts:
+        result.append(part)
+        for i in DISK_EXCLUDE:
+            if part.mountpoint.find(i) != -1:
+                result.remove(part)
+                break
+    return result
+
+
 def get_disk_info():
     global IP, TIME
     # disk: total, usage, free, %'''
+    disks = {}
+
+    for partition in get_disk_partitions():
+        disk = psutil.disk_usage(partition.mountpoint)
+        disks[partition.mountpoint] = {
+            'total': '%.2f' % (disk.total*1.0/1048576),
+            'used': '%.2f' % (disk.used*1.0/1048576),
+            'free':  '%.2f' % (disk.free*1.0/1048576),
+            'percent': disk.percent
+        }
+
     disk = psutil.disk_usage('/')
     info = {
-        'total': '%.2f' % (disk.total/1073741824),
-        'used': '%.2f' % (disk.used/1073741824),
-        'free':  '%.2f' % (disk.free/1073741824),
+        'total': '%.2f' % (disk.total*1.0/1048576),
+        'used': '%.2f' % (disk.used*1.0/1048576),
+        'free':  '%.2f' % (disk.free*1.0/1048576),
         'percent': disk.percent
     }
     conn.zadd("system_monitor:collection:disk:" + IP,
-              {json.dumps({"time": TIME, "value": str('%.2f' % (disk.used/1073741824))}): TIME})
-    return info
+              {json.dumps({"time": TIME, "value": disks}): TIME})
+    return disks
 
 
 def get_ipv4():
