@@ -8,11 +8,11 @@ import time
 import requests
 import psutil
 import uuid
+import os
 
 HOST = "redis-host"
 PORT = "redis-port"
 PASSWORD = "redis-password"
-SALT = "redis-salt"
 UUID = str(uuid.uuid4()).replace("-", "")
 IP = "0.0.0.0"
 TIME = math.floor(time.time())
