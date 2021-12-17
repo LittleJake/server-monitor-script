@@ -59,8 +59,7 @@ def get_network():
 def get_process_num():
     # n-2 '''
     p = subprocess.Popen("ps aux | wc -l", shell=True, stdout=subprocess.PIPE)
-    return 
-(p.stdout.readline().strip())
+    return b2s(p.stdout.readline().strip())
 
 
 def get_cpu_info():
@@ -205,17 +204,19 @@ def delete_offline():
             for k, v in conn.hgetall("system_monitor:hashes").items():
                 hashes = bytes.decode(k)
                 ip = bytes.decode(v)
-                if conn.exsits("system_monitor:info:" + hashes) and TIME - float(conn.hmget("system_monitor:info:" + hashes, 'Update Time')[0]) > TIMEOUT:
-                    p.hdel("system_monitor:hashes", hashes)
-                    p.delete("system_monitor:info:" + hashes)
-                    p.zremrangebyscore("system_monitor:collection:cpu:" + hashes, 0, TIME)
-                    p.zremrangebyscore("system_monitor:collection:disk:" + hashes, 0, TIME)
-                    p.zremrangebyscore("system_monitor:collection:memory:" + hashes, 0, TIME)
-                    p.zremrangebyscore("system_monitor:collection:swap:" + hashes, 0, TIME)
-                    p.zremrangebyscore("system_monitor:collection:network:RX:" + hashes, 0, TIME)
-                    p.zremrangebyscore("system_monitor:collection:network:TX:" + hashes, 0, TIME)
-                    p.delete("system_monitor:stat:" + hashes)
-                    p.execute()
+                if conn.exsits("system_monitor:info:" + hashes):
+                    p.zremrangebyscore("system_monitor:collection:cpu:" + hashes, 0, TIME - TIME_PERIOD)
+                    p.zremrangebyscore("system_monitor:collection:disk:" + hashes, 0, TIME - TIME_PERIOD)
+                    p.zremrangebyscore("system_monitor:collection:memory:" + hashes, 0, TIME - TIME_PERIOD)
+                    p.zremrangebyscore("system_monitor:collection:swap:" + hashes, 0, TIME - TIME_PERIOD)
+                    p.zremrangebyscore("system_monitor:collection:network:RX:" + hashes, 0, TIME - TIME_PERIOD)
+                    p.zremrangebyscore("system_monitor:collection:network:TX:" + hashes, 0, TIME - TIME_PERIOD)
+                    
+                    if TIME - float(conn.hmget("system_monitor:info:" + hashes, 'Update Time')[0]) > TIMEOUT:
+                        p.hdel("system_monitor:hashes", hashes)
+                        p.delete("system_monitor:info:" + hashes)
+                        p.delete("system_monitor:stat:" + hashes)
+                        p.execute()
         except:
             pass
 
@@ -251,13 +252,6 @@ def report_once():
     with conn.pipeline(transaction=False) as pipeline:
         pipeline.hmset("system_monitor:hashes", {UUID: IP})
         pipeline.hmset("system_monitor:info:" + UUID, info)
-        pipeline.zremrangebyscore("system_monitor:collection:cpu:" + UUID, 0, TIME - TIME_PERIOD)
-        pipeline.zremrangebyscore("system_monitor:collection:thermal:" + UUID, 0, TIME - TIME_PERIOD)
-        pipeline.zremrangebyscore("system_monitor:collection:disk:" + UUID, 0, TIME - TIME_PERIOD)
-        pipeline.zremrangebyscore("system_monitor:collection:memory:" + UUID, 0, TIME - TIME_PERIOD)
-        pipeline.zremrangebyscore("system_monitor:collection:swap:" + UUID, 0, TIME - TIME_PERIOD)
-        pipeline.zremrangebyscore("system_monitor:collection:network:RX:" + UUID, 0, TIME - TIME_PERIOD)
-        pipeline.zremrangebyscore("system_monitor:collection:network:TX:" + UUID, 0, TIME - TIME_PERIOD)
         pipeline.execute()
 
     report()
