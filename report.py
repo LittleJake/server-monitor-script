@@ -11,30 +11,31 @@ import os
 import cpuinfo
 import distro
 import platform
+from dotenv import load_dotenv
 
-HOST = ""
-PORT = ""
-PASSWORD = ""
-IPV4_API = "http://v4.ipv6-test.com/api/myip.php"
-IPV6_API = "http://v6.ipv6-test.com/api/myip.php"
-IP_API = "http://ip-api.com/json?fields=country,countryCode"
-REPORT_TIME = 60
+load_dotenv()
+
+HOST = os.getenv("HOST", "127.0.0.1")
+PORT = os.getenv("PORT", "6379")
+PASSWORD = os.getenv("PASSWORD", "")
+IPV4_API = os.getenv('IPV4_API', "http://v4.ipv6-test.com/api/myip.php")
+IPV6_API = os.getenv('IPV6_API', "http://v6.ipv6-test.com/api/myip.php")
+IP_API = os.getenv('IP_API', "http://ip-api.com/json?fields=country,countryCode")
+REPORT_INTEVAL = int(os.getenv('REPORT_INTEVAL', '60'))
+DATA_TIMEOUT = int(os.getenv('DATA_TIMEOUT', '259200'))
+RETENTION_TIME = int(os.getenv('RETENTION_TIME', '86400'))
+DISK_EXCLUDE = os.getenv('DISK_EXCLUDE','/run,/sys,/boot,/dev,/proc,/var/lib').split(",")
+DISK_FS_EXCLUDE = os.getenv('DISK_FS_EXCLUDE', 'tmpfs,overlay').split(",")
+
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(message)s")
-
-
 UUID = str(uuid.uuid4()).replace("-", "")
 IPV4 = None
 IPV6 = None
 COUNTRY = None
 conn = redis.Redis(host=HOST, password=PASSWORD, port=PORT, retry_on_timeout=10)
 TIME = math.floor(time.time())
-TIMEOUT = 259200
-RETENTION_TIME = 86400
-CPU_INFO = cpuinfo.get_cpu_info()
-DISK_EXCLUDE = ['/run', '/sys', '/boot', '/dev', '/proc', '/gdrive', '/var/lib']
-DISK_FS_EXCLUDE = ['tmpfs', 'overlay']
 NET_FORMER = psutil.net_io_counters()
-
+CPU_INFO = cpuinfo.get_cpu_info()
 
 def get_network():
     global NET_FORMER
@@ -239,10 +240,10 @@ def report_once():
         pipeline.hmset(name="system_monitor:info:" + UUID, mapping=info)
         pipeline.zadd("system_monitor:collection:" + UUID, {get_aggregate_stat_json(): TIME})
         pipeline.zremrangebyscore("system_monitor:collection:" + UUID, 0, TIME - RETENTION_TIME)
-        pipeline.expire("system_monitor:nodes", TIMEOUT)
-        pipeline.expire("system_monitor:hashes", TIMEOUT)
-        pipeline.expire("system_monitor:info:" + UUID, TIMEOUT)
-        pipeline.expire("system_monitor:collection:" + UUID, TIMEOUT)
+        pipeline.expire("system_monitor:nodes", DATA_TIMEOUT)
+        pipeline.expire("system_monitor:hashes", DATA_TIMEOUT)
+        pipeline.expire("system_monitor:info:" + UUID, DATA_TIMEOUT)
+        pipeline.expire("system_monitor:collection:" + UUID, DATA_TIMEOUT)
         pipeline.execute()
 
     logging.info("Finish Reporting!")
@@ -261,4 +262,4 @@ while True:
         report_once()
     except Exception as e:
         logging.error(e)
-    time.sleep(REPORT_TIME)
+    time.sleep(REPORT_INTEVAL)
