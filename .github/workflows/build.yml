@@ -15,9 +15,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      # - name: Add commit id into version
-      #   if: ${{ !startsWith(github.ref, 'refs/tags/') }}
-      #   run: SHA=$(git rev-parse --short HEAD) && sed -i 's/\(v[0-9]\.[0-9]\.[0-9]\)/\1-'"$SHA"'/' src/version.h
       - name: Build
         run: docker run --rm -v $GITHUB_WORKSPACE:/root/workdir multiarch/alpine:x86-latest-stable /bin/sh -c "apk add bash git python3 py3-pip && cd /root/workdir && chmod +x build-script/build.alpine.release.sh && bash build-script/build.alpine.release.sh"
 
@@ -43,9 +40,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      # - name: Add commit id into version
-      #   if: ${{ !startsWith(github.ref, 'refs/tags/') }}
-      #   run: SHA=$(git rev-parse --short HEAD) && sed -i 's/\(v[0-9]\.[0-9]\.[0-9]\)/\1-'"$SHA"'/' src/version.h
       - name: Build
         run: docker run -v $GITHUB_WORKSPACE:/root/workdir multiarch/alpine:amd64-latest-stable /bin/sh -c "apk add bash git python3 py3-pip && cd /root/workdir && chmod +x build-script/build.alpine.release.sh && bash build-script/build.alpine.release.sh"
 
@@ -71,11 +65,6 @@ jobs:
      runs-on: ubuntu-latest
      steps:
        - uses: actions/checkout@v3
-#       - name: Set up QEMU
-#         uses: docker/setup-qemu-action@v2
-       # - name: Add commit id into version
-       #   if: ${{ !startsWith(github.ref, 'refs/tags/') }}
-       #   run: SHA=$(git rev-parse --short HEAD) && sed -i 's/\(v[0-9]\.[0-9]\.[0-9]\)/\1-'"$SHA"'/' src/version.h
        - name: Build
          run: |
           docker run --rm --privileged multiarch/qemu-user-static:register --reset
@@ -102,11 +91,6 @@ jobs:
      runs-on: ubuntu-latest
      steps:
        - uses: actions/checkout@v3
-#       - name: Set up QEMU
-#         uses: docker/setup-qemu-action@v2
-       # - name: Add commit id into version
-       #   if: ${{ !startsWith(github.ref, 'refs/tags/') }}
-       #   run: SHA=$(git rev-parse --short HEAD) && sed -i 's/\(v[0-9]\.[0-9]\.[0-9]\)/\1-'"$SHA"'/' src/version.h
        - name: Build
          run: |
           docker run --rm --privileged multiarch/qemu-user-static:register --reset
@@ -133,11 +117,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-#      - name: Set up QEMU
-#        uses: docker/setup-qemu-action@v2
-      # - name: Add commit id into version
-      #   if: ${{ !startsWith(github.ref, 'refs/tags/') }}
-      #   run: SHA=$(git rev-parse --short HEAD) && sed -i 's/\(v[0-9]\.[0-9]\.[0-9]\)/\1-'"$SHA"'/' src/version.h
       - name: Build
         run: |
           docker run --rm --privileged multiarch/qemu-user-static:register --reset
