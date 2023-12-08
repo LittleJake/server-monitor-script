@@ -1,0 +1,5 @@
+py-cpuinfo
+distro
+psutil
+requests
+redis
