@@ -13,4 +13,5 @@ cd dist
 chmod +rx report
 chmod +r ./*
 cd ..
+mv .env dist/
 mv dist monitor
