@@ -11,9 +11,9 @@ import os
 import cpuinfo
 import distro
 import platform
-from dotenv import load_dotenv
+from dotenv import load_dotenv, find_dotenv
 
-load_dotenv()
+load_dotenv(find_dotenv())
 
 HOST = os.getenv("HOST", "127.0.0.1")
 PORT = os.getenv("PORT", "6379")
