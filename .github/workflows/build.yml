@@ -16,7 +16,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Build
-        run: docker run --rm -v $GITHUB_WORKSPACE:/root/workdir multiarch/ubuntu-core:x86-focal /bin/sh -c "apt update && apt install -y bash git python3 python3-pip && cd /root/workdir && chmod +x build-script/build.release.sh && bash build-script/build.release.sh"
+        run: docker run --rm -v $GITHUB_WORKSPACE:/root/workdir multiarch/ubuntu-core:i386-focal /bin/sh -c "apt update && apt install -y bash git python3 python3-pip && cd /root/workdir && chmod +x build-script/build.release.sh && bash build-script/build.release.sh"
 
       - name: Package Release
         run: tar czf server_monitor_linux32.tar.gz monitor
@@ -60,17 +60,43 @@ jobs:
           draft: true
           tag_name: Alpha
 
-  armv7_build:
-     name: Linux armv7 Build
+  # armv7_build:
+  #    name: Linux armv7 Build
+  #    runs-on: ubuntu-latest
+  #    steps:
+  #      - uses: actions/checkout@v3
+  #      - name: Build
+  #        run: |
+  #         docker run --rm --privileged multiarch/qemu-user-static:register --reset
+  #         docker run -v $GITHUB_WORKSPACE:/root/workdir multiarch/ubuntu-core:armv7-focal /bin/sh -c "apt update && apt install -y bash git python3 python3-pip && cd /root/workdir && chmod +x build-script/build.release.sh && bash build-script/build.release.sh"
+  #      - name: Package Release
+  #        run: tar czf server_monitor_armv7.tar.gz monitor
+
+  #      - name: Upload
+  #        uses: actions/upload-artifact@v3
+  #        with:
+  #          path: |
+  #            server_monitor_*.tar.gz
+
+  #      - name: Draft Release
+  #        uses: softprops/action-gh-release@v1
+  #        if: ${{ github.event_name != 'pull_request' && startsWith(github.ref, 'refs/tags/') }}
+  #        with:
+  #          files: server_monitor_armv7.tar.gz
+  #          draft: true
+  #          tag_name: Alpha
+
+  arm64_build:
+     name: Linux arm64 Build
      runs-on: ubuntu-latest
      steps:
        - uses: actions/checkout@v3
        - name: Build
          run: |
           docker run --rm --privileged multiarch/qemu-user-static:register --reset
-          docker run -v $GITHUB_WORKSPACE:/root/workdir multiarch/ubuntu-core:armv7-focal /bin/sh -c "apt update && apt install -y bash git python3 python3-pip && cd /root/workdir && chmod +x build-script/build.release.sh && bash build-script/build.release.sh"
+          docker run -v $GITHUB_WORKSPACE:/root/workdir multiarch/ubuntu-core:arm64-focal /bin/sh -c "apt update && apt install -y bash git python3 python3-pip && cd /root/workdir && chmod +x build-script/build.release.sh && bash build-script/build.release.sh"
        - name: Package Release
-         run: tar czf server_monitor_armv7.tar.gz monitor
+         run: tar czf server_monitor_arm64.tar.gz monitor
 
        - name: Upload
          uses: actions/upload-artifact@v3
@@ -82,33 +108,7 @@ jobs:
          uses: softprops/action-gh-release@v1
          if: ${{ github.event_name != 'pull_request' && startsWith(github.ref, 'refs/tags/') }}
          with:
-           files: server_monitor_armv7.tar.gz
-           draft: true
-           tag_name: Alpha
-
-  aarch64_build:
-     name: Linux aarch64 Build
-     runs-on: ubuntu-latest
-     steps:
-       - uses: actions/checkout@v3
-       - name: Build
-         run: |
-          docker run --rm --privileged multiarch/qemu-user-static:register --reset
-          docker run -v $GITHUB_WORKSPACE:/root/workdir multiarch/ubuntu-core:aarch64-focal /bin/sh -c "apt update && apt install -y bash git python3 python3-pip && cd /root/workdir && chmod +x build-script/build.release.sh && bash build-script/build.release.sh"
-       - name: Package Release
-         run: tar czf server_monitor_aarch64.tar.gz monitor
-
-       - name: Upload
-         uses: actions/upload-artifact@v3
-         with:
-           path: |
-             server_monitor_*.tar.gz
-
-       - name: Draft Release
-         uses: softprops/action-gh-release@v1
-         if: ${{ github.event_name != 'pull_request' && startsWith(github.ref, 'refs/tags/') }}
-         with:
-           files: server_monitor_aarch64.tar.gz
+           files: server_monitor_arm64.tar.gz
            draft: true
            tag_name: Alpha
 
