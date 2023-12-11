@@ -16,7 +16,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Build
-        run: docker run --rm -v $GITHUB_WORKSPACE:/root/workdir multiarch/alpine:x86-latest-stable /bin/sh -c "apk add bash git python3 py3-pip && cd /root/workdir && chmod +x build-script/build.alpine.release.sh && bash build-script/build.alpine.release.sh"
+        run: docker run --rm -v $GITHUB_WORKSPACE:/root/workdir multiarch/ubuntu-core:x86-focal /bin/sh -c "apt install -y bash git python3 python3-pip && cd /root/workdir && chmod +x build-script/build.release.sh && bash build-script/build.release.sh"
 
       - name: Package Release
         run: tar czf server_monitor_linux32.tar.gz monitor
@@ -41,7 +41,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Build
-        run: docker run -v $GITHUB_WORKSPACE:/root/workdir multiarch/alpine:amd64-latest-stable /bin/sh -c "apk add bash git python3 py3-pip && cd /root/workdir && chmod +x build-script/build.alpine.release.sh && bash build-script/build.alpine.release.sh"
+        run: docker run -v $GITHUB_WORKSPACE:/root/workdir multiarch/ubuntu-core:amd64-focal /bin/sh -c "apt install -y bash git python3 python3-pip && cd /root/workdir && chmod +x build-script/build.release.sh && bash build-script/build.release.sh"
 
       - name: Package Release
         run: tar czf server_monitor_linux64.tar.gz monitor
@@ -68,7 +68,7 @@ jobs:
        - name: Build
          run: |
           docker run --rm --privileged multiarch/qemu-user-static:register --reset
-          docker run -v $GITHUB_WORKSPACE:/root/workdir multiarch/alpine:armv7-latest-stable /bin/sh -c "apk add bash git python3 py3-pip && cd /root/workdir && chmod +x build-script/build.alpine.release.sh && bash build-script/build.alpine.release.sh"
+          docker run -v $GITHUB_WORKSPACE:/root/workdir multiarch/ubuntu-core:armv7-focal /bin/sh -c "apt install -y bash git python3 python3-pip && cd /root/workdir && chmod +x build-script/build.release.sh && bash build-script/build.release.sh"
        - name: Package Release
          run: tar czf server_monitor_armv7.tar.gz monitor
 
@@ -94,7 +94,7 @@ jobs:
        - name: Build
          run: |
           docker run --rm --privileged multiarch/qemu-user-static:register --reset
-          docker run -v $GITHUB_WORKSPACE:/root/workdir multiarch/alpine:aarch64-latest-stable /bin/sh -c "apk add bash git python3 py3-pip && cd /root/workdir && chmod +x build-script/build.alpine.release.sh && bash build-script/build.alpine.release.sh"
+          docker run -v $GITHUB_WORKSPACE:/root/workdir multiarch/ubuntu-core:aarch64-focal /bin/sh -c "apt install -y bash git python3 python3-pip && cd /root/workdir && chmod +x build-script/build.release.sh && bash build-script/build.release.sh"
        - name: Package Release
          run: tar czf server_monitor_aarch64.tar.gz monitor
 
@@ -120,7 +120,7 @@ jobs:
       - name: Build
         run: |
           docker run --rm --privileged multiarch/qemu-user-static:register --reset
-          docker run -v $GITHUB_WORKSPACE:/root/workdir multiarch/alpine:armhf-latest-stable /bin/sh -c "apk add bash git python3 py3-pip && cd /root/workdir && chmod +x build-script/build.alpine.release.sh && bash build-script/build.alpine.release.sh"
+          docker run -v $GITHUB_WORKSPACE:/root/workdir multiarch/ubuntu-core:armhf-focal /bin/sh -c "apt install -y bash git python3 python3-pip && cd /root/workdir && chmod +x build-script/build.release.sh && bash build-script/build.release.sh"
       - name: Package Release
         run: tar czf server_monitor_armhf.tar.gz monitor
 
