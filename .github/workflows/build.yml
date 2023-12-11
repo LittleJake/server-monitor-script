@@ -16,7 +16,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Build
-        run: docker run --rm -v $GITHUB_WORKSPACE:/root/workdir multiarch/ubuntu-core:i386-bionic /bin/sh -c "apt update && apt install -y bash zlib-devel make cmake git python3 python3-pip && cd /root/workdir && chmod +x build-script/build.release.sh && bash build-script/build.release.sh"
+        run: docker run --rm -v $GITHUB_WORKSPACE:/root/workdir multiarch/ubuntu-core:i386-bionic /bin/sh -c "apt update && apt install -y bash zlib1g zlib1g-dev make cmake git python3 python3-pip && cd /root/workdir && chmod +x build-script/build.release.sh && bash build-script/build.release.sh"
 
       - name: Package Release
         run: tar czf server_monitor_linux32.tar.gz monitor
