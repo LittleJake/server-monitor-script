@@ -3,4 +3,4 @@ distro
 psutil
 requests
 redis
-#dotenv
+python-dotenv
