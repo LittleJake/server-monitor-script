@@ -13,7 +13,12 @@ import distro
 import platform
 from dotenv import load_dotenv, find_dotenv
 
-load_dotenv(find_dotenv())
+# get .env location for pyinstaller
+extDataDir = os.getcwd()
+if getattr(sys, 'frozen', False):
+    extDataDir = sys._MEIPASS
+load_dotenv(dotenv_path=os.path.join(extDataDir, '.env'))
+
 
 HOST = os.getenv("HOST", "127.0.0.1")
 PORT = os.getenv("PORT", "6379")
