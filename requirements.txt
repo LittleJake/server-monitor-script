@@ -3,3 +3,4 @@ distro
 psutil
 requests
 redis
+dotenv
