@@ -1,2 +1,5 @@
 .idea
 .env
+.uuid
+dist/
+build/
