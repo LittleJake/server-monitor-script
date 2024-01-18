@@ -12,6 +12,7 @@ After=network.target
 [Service]
 User=root
 ExecStart=/usr/bin/python3 /usr/local/monitor/report.py
+WorkingDirectory=/usr/local/monitor/
 Restart=always
 
 [Install]
