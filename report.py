@@ -12,6 +12,7 @@ import os
 import cpuinfo
 import distro
 import platform
+from datetime import timedelta
 from dotenv import load_dotenv, find_dotenv
 
 # get .env location for pyinstaller
@@ -66,6 +67,8 @@ def get_process_num():
 def get_cpu_name():
     return CPU_INFO['brand_raw']
 
+def get_load_average():
+    return "%.2f, %.2f, %.2f" % (psutil.getloadavg())
 
 def get_cpu_core():
     # core modelname mhz'''
@@ -76,12 +79,21 @@ def get_temp():
     # thermal temp
     result = {}
     try:
-	    for sensor_type, sensors in psutil.sensors_temperatures().items():
-	        for sensor in sensors:
-	            result[sensor_type+":"+sensor.label] = sensor.current
-    except: pass
+        for sensor_type, sensors in psutil.sensors_temperatures().items():
+            for sensor in sensors:
+                result[sensor_type+":"+sensor.label] = sensor.current
+    except: 
+        pass
     return result
 
+def get_battery():
+    # battery temp
+    result = {}
+    try:
+        result["percent"] = psutil.sensors_battery().percent
+    except:
+        pass
+    return result
 
 def get_mem_info():
     info = {'Mem': {
@@ -180,8 +192,9 @@ def get_country():
             try:
                 resp = requests.get(url=IP_API, timeout=5)
                 if resp.status_code == 200:
-                	j = resp.json()
-                	return (j["country"], j["countryCode"])
+                    j = resp.json()
+                    COUNTRY = (j["country"], j["countryCode"])
+                    return COUNTRY
             except:
                 i = i - 1
 
@@ -196,7 +209,8 @@ def get_connections():
 
 def get_uptime():
     t = time.time() - psutil.boot_time()
-    return "%02d:%02d:%02d" % (int(t / 3600), int(t / 60 % 60), int(t % 60))
+    delta = timedelta(seconds=t)
+    return str(delta)
 
 
 def get_load():
@@ -213,7 +227,8 @@ def get_aggregate_stat():
         'Memory': get_mem_info(),
         'Load': get_load(),
         'Network': get_network(),
-        'Thermal': get_temp()
+        'Thermal': get_temp(),
+        'Battery': get_battery(),
     }
     logging.debug(info)
     return info
@@ -234,6 +249,7 @@ def report_once():
         'Uptime': get_uptime(),
         'Connection': get_connections(),
         'Process': get_process_num(),
+        'Load Average': get_load_average(),
         "Update Time": TIME,
         "Country": COUNTRY[0],
         "Country Code": COUNTRY[1],
