@@ -1,7 +1,7 @@
 server-monitor-script
 =======
 
-<img alt="Apache 2.0" src="https://img.shields.io/badge/License-Apache2.0-green"> <img alt="GitHub Repo stars" src="https://img.shields.io/github/stars/LittleJake/server-monitor-script?style=social">
+<img alt="Apache 2.0" src="https://img.shields.io/github/license/LittleJake/server-monitor-script?style=for-the-badge"> <img alt="GitHub Repo stars" src="https://img.shields.io/github/stars/LittleJake/server-monitor-script?style=for-the-badge">
 
 <img src="https://img.shields.io/badge/Windows-0078D6?style=for-the-badge&logo=windows&logoColor=white"> <img src="https://img.shields.io/badge/Linux-FCC624?style=for-the-badge&logo=linux&logoColor=black"> <img src="https://img.shields.io/badge/python3-3670A0?style=for-the-badge&logo=python&logoColor=ffdd54">
 
