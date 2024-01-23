@@ -18,7 +18,6 @@ EOF
         chmod +x /etc/local.d/monitor.start
         rc-update add local
         rc-service local start
-        return
         }
      (which yum || which apt-get) && { 
         echo "CentOS or Debian"
@@ -44,7 +43,6 @@ EOF
         systemctl daemon-reload
         systemctl start monitor
         systemctl enable monitor
-        return
         }
      ;;
   Darwin )
