@@ -212,7 +212,7 @@ def get_connections():
 
 
 def get_uptime():
-    t = time.time() - psutil.boot_time()
+    t = int(time.time() - psutil.boot_time())
     delta = timedelta(seconds=t)
     return str(delta)
 
