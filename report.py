@@ -269,7 +269,7 @@ def report_once():
         'Load Average': get_load_average(),
         "Update Time": TIME,
         "Country": COUNTRY[0],
-        "Country Code": COUNTRY[1],
+        "Country Code": "CN" if COUNTRY[1] in ("TW", "HK", "MO") else COUNTRY[1],
         "Throughput": "D: %.2f GB / U: %.2f GB" % (NET_FORMER.bytes_recv/1073741824, NET_FORMER.bytes_sent/1073741824),
     }
     
