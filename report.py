@@ -68,7 +68,10 @@ def get_cpu_name():
     return CPU_INFO['brand_raw']
 
 def get_load_average():
-    return "%.2f, %.2f, %.2f" % (psutil.getloadavg())
+    try:
+        avg = psutil.getloadavg()
+    except: return "Python version not support"
+    return "%.2f, %.2f, %.2f" % ()
 
 def get_cpu_core():
     # core modelname mhz'''
