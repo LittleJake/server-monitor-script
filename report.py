@@ -25,6 +25,7 @@ load_dotenv(dotenv_path=os.path.join(extDataDir, '.env'))
 HOST = os.getenv("HOST", "127.0.0.1")
 PORT = os.getenv("PORT", "6379")
 PASSWORD = os.getenv("PASSWORD", "")
+SSL = os.getenv("SSL", 'False').lower() in ('true', '1', 't')
 IPV4_API = os.getenv('IPV4_API', "http://v4.ipv6-test.com/api/myip.php")
 IPV6_API = os.getenv('IPV6_API', "http://v6.ipv6-test.com/api/myip.php")
 IP_API = os.getenv('IP_API', "http://ip-api.com/json?fields=country,countryCode")
@@ -39,7 +40,7 @@ UUID = str(uuid.uuid4()).replace("-", "")
 IPV4 = None
 IPV6 = None
 COUNTRY = None
-conn = redis.Redis(host=HOST, password=PASSWORD, port=PORT, retry_on_timeout=10)
+conn = redis.Redis(host=HOST, password=PASSWORD, port=PORT, ssl=SSL, retry_on_timeout=10)
 TIME = math.floor(time.time())
 NET_FORMER = psutil.net_io_counters()
 CPU_INFO = cpuinfo.get_cpu_info()
@@ -71,7 +72,7 @@ def get_load_average():
     try:
         avg = psutil.getloadavg()
     except: return "Python version not support"
-    return "%.2f, %.2f, %.2f" % ()
+    return "%.2f, %.2f, %.2f" % avg
 
 def get_cpu_core():
     # core modelname mhz'''
@@ -244,6 +245,19 @@ def report_once():
     IP = get_ipv4()
     TIME = time.time()
     COUNTRY = get_country()
+    logging.debug("{}x {} @{}".format(CPU_INFO['count'], CPU_INFO.get('brand_raw', CPU_INFO.get('arch', 'Unknown')), CPU_INFO['hz_advertised_friendly']))
+    logging.debug(get_sys_version())
+    logging.debug(re.sub("[0-9]*\.[0-9]*\.[0-9]*", "*.*.*", get_ipv4()))
+    logging.debug(re.sub("[a-zA-Z0-9]*:", "*:", get_ipv6()))
+    logging.debug(get_uptime())
+    logging.debug(get_connections())
+    logging.debug(get_process_num())
+    logging.debug(get_load_average())
+    logging.debug(TIME)
+    logging.debug(COUNTRY[0])
+    logging.debug(COUNTRY[1])
+    logging.debug("D: %.2f GB / U: %.2f GB" % (NET_FORMER.bytes_recv/1073741824, NET_FORMER.bytes_sent/1073741824))
+
     info = {
         "CPU": "{}x {} @{}".format(CPU_INFO['count'], CPU_INFO.get('brand_raw', CPU_INFO.get('arch', 'Unknown')), CPU_INFO['hz_advertised_friendly']),
         "System Version": get_sys_version(),
@@ -258,11 +272,11 @@ def report_once():
         "Country Code": COUNTRY[1],
         "Throughput": "D: %.2f GB / U: %.2f GB" % (NET_FORMER.bytes_recv/1073741824, NET_FORMER.bytes_sent/1073741824),
     }
-    logging.debug(info)
+    
 
     with conn.pipeline(transaction=False) as pipeline:
-        pipeline.hmset(name="system_monitor:hashes", mapping={UUID: IP})
-        pipeline.hmset(name="system_monitor:info:" + UUID, mapping=info)
+        pipeline.hset(name="system_monitor:hashes", mapping={UUID: IP})
+        pipeline.hset(name="system_monitor:info:" + UUID, mapping=info)
         pipeline.zadd("system_monitor:collection:" + UUID, {get_aggregate_stat_json(): TIME})
         pipeline.zremrangebyscore("system_monitor:collection:" + UUID, 0, TIME - RETENTION_TIME)
         pipeline.expire("system_monitor:nodes", DATA_TIMEOUT)
