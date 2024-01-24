@@ -34,6 +34,7 @@ DATA_TIMEOUT = int(os.getenv('DATA_TIMEOUT', '259200'))
 RETENTION_TIME = int(os.getenv('RETENTION_TIME', '86400'))
 DISK_EXCLUDE = os.getenv('DISK_EXCLUDE','/run,/sys,/boot,/dev,/proc,/var/lib').split(",")
 DISK_FS_EXCLUDE = os.getenv('DISK_FS_EXCLUDE', 'tmpfs,overlay').split(",")
+DISK_OPTS_EXCLUDE = os.getenv('DISK_OPTS_EXCLUDE', 'ro').split(",")
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(message)s")
 UUID = str(uuid.uuid4()).replace("-", "")
@@ -128,7 +129,7 @@ def get_disk_partitions():
     for part in parts:
         result.append(part)
         for i in DISK_EXCLUDE:
-            if part.mountpoint.find(i) != -1 or part.fstype in DISK_FS_EXCLUDE:
+            if part.mountpoint.find(i) != -1 or part.fstype in DISK_FS_EXCLUDE or len(set(part.opts.split(",")) & set(DISK_OPTS_EXCLUDE)) > 0:
                 result.remove(part)
                 break
                 
