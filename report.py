@@ -279,7 +279,7 @@ def report_once():
         "Update Time": TIME,
         "Country": COUNTRY[0],
         "Country Code": "CN" if COUNTRY[1] in ("TW", "HK", "MO") else COUNTRY[1],
-        "Throughput": "↑%.2f GB / ↓%.2f GB" % (NET_FORMER.bytes_recv/1073741824, NET_FORMER.bytes_sent/1073741824),
+        "Throughput": "↓%.2f GB / ↑%.2f GB" % (NET_FORMER.bytes_recv/1073741824, NET_FORMER.bytes_sent/1073741824),
     }
     
 
