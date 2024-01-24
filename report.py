@@ -225,9 +225,6 @@ def get_uptime():
     delta = timedelta(seconds=t)
     return str(delta)
 
-def get_cpu_freq():
-    return CPU_INFO.get('hz_advertised_friendly', "%.2f Ghz" % (psutil.cpu_freq().max / 1000))
-
 
 def get_load():
     return dict(psutil.cpu_times_percent()._asdict())
@@ -257,7 +254,7 @@ def report_once():
     IP = get_ipv4()
     TIME = time.time()
     COUNTRY = get_country()
-    logging.debug("{}x {} @{}".format(get_cpu_core(), get_cpu_name(), get_cpu_freq()))
+    logging.debug("{}x {}".format(get_cpu_core(), get_cpu_name()))
     logging.debug(get_sys_version())
     logging.debug(re.sub("[0-9]*\.[0-9]*\.[0-9]*", "*.*.*", get_ipv4()))
     logging.debug(re.sub("[a-zA-Z0-9]*:", "*:", get_ipv6()))
@@ -271,7 +268,7 @@ def report_once():
     logging.debug("D: %.2f GB / U: %.2f GB" % (NET_FORMER.bytes_recv/1073741824, NET_FORMER.bytes_sent/1073741824))
 
     info = {
-        "CPU": "{}x {} @{}".format(get_cpu_core(), get_cpu_name(), get_cpu_freq()),
+        "CPU": "{}x {}".format(get_cpu_core(), get_cpu_name()),
         "System Version": get_sys_version(),
         "IPV4": re.sub("[0-9]*\.[0-9]*\.[0-9]*", "*.*.*", get_ipv4()),
         "IPV6": re.sub("[a-zA-Z0-9]*:", "*:", get_ipv6()),
