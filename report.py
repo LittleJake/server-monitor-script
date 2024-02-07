@@ -35,6 +35,9 @@ RETENTION_TIME = int(os.getenv('RETENTION_TIME', '86400'))
 DISK_EXCLUDE = os.getenv('DISK_EXCLUDE','/run,/sys,/boot,/dev,/proc,/var/lib').split(",")
 DISK_FS_EXCLUDE = os.getenv('DISK_FS_EXCLUDE', 'tmpfs,overlay').split(",")
 DISK_OPTS_EXCLUDE = os.getenv('DISK_OPTS_EXCLUDE', 'ro').split(",")
+SERVER_URL = os.getenv('SERVER_URL', "")
+REPORT_MODE = os.getenv('REPORT_MODE', "redis").lower()
+SERVER_TOKEN = os.getenv('SERVER_TOKEN', "")
 
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(message)s")
@@ -46,13 +49,23 @@ else:
     with open('.uuid', 'w') as fp:
         fp.write(UUID)
 
+print("Your UUID is: %s" % UUID)
+SERVER_URL_INFO = "%s/api/report/info/%s" % (SERVER_URL, UUID)
+SERVER_URL_COLLECTION = "%s/api/report/collection/%s" % (SERVER_URL, UUID)
+SERVER_URL_HASH = "%s/api/report/hash/%s" % (SERVER_URL, UUID)
+
+if REPORT_MODE == 'http' and SERVER_TOKEN == "":
+    print("Please generate server token using `php think token add --uuid <UUID>` on your central server.")
+    exit(-1)
+
 IPV4 = None
 IPV6 = None
 COUNTRY = None
-conn = redis.Redis(host=HOST, password=PASSWORD, port=PORT, ssl=SSL, retry_on_timeout=10)
 TIME = math.floor(time.time())
 NET_FORMER = psutil.net_io_counters()
 CPU_INFO = cpuinfo.get_cpu_info()
+
+conn = redis.Redis(host=HOST, password=PASSWORD, port=PORT, ssl=SSL, retry_on_timeout=10)
 
 def get_network():
     global NET_FORMER
@@ -282,18 +295,28 @@ def report_once():
         "Throughput": "↓%.2f GB / ↑%.2f GB" % (NET_FORMER.bytes_recv/1073741824, NET_FORMER.bytes_sent/1073741824),
     }
     
+    if REPORT_MODE == 'redis':
+        with conn.pipeline(transaction=False) as pipeline:
+            pipeline.hset(name="system_monitor:hashes", mapping={UUID: IP})
+            pipeline.hset(name="system_monitor:info:" + UUID, mapping=info)
+            pipeline.zadd("system_monitor:collection:" + UUID, {get_aggregate_stat_json(): TIME})
+            
+            pipeline.zremrangebyscore("system_monitor:collection:" + UUID, 0, TIME - RETENTION_TIME)
+            pipeline.expire("system_monitor:hashes", DATA_TIMEOUT)
+            pipeline.expire("system_monitor:info:" + UUID, DATA_TIMEOUT)
+            pipeline.expire("system_monitor:collection:" + UUID, DATA_TIMEOUT)
+            pipeline.execute()
 
-    with conn.pipeline(transaction=False) as pipeline:
-        pipeline.hset(name="system_monitor:hashes", mapping={UUID: IP})
-        pipeline.hset(name="system_monitor:info:" + UUID, mapping=info)
-        pipeline.zadd("system_monitor:collection:" + UUID, {get_aggregate_stat_json(): TIME})
-        
-        pipeline.zremrangebyscore("system_monitor:collection:" + UUID, 0, TIME - RETENTION_TIME)
-        pipeline.expire("system_monitor:nodes", DATA_TIMEOUT)
-        pipeline.expire("system_monitor:hashes", DATA_TIMEOUT)
-        pipeline.expire("system_monitor:info:" + UUID, DATA_TIMEOUT)
-        pipeline.expire("system_monitor:collection:" + UUID, DATA_TIMEOUT)
-        pipeline.execute()
+    elif REPORT_MODE == 'http':
+        try:
+            req = requests.post(url=SERVER_URL_HASH, data={'ip': IPV4}, headers={'authorization': SERVER_TOKEN})
+            if req.status_code != 200: raise Exception(req)
+            req = requests.post(url=SERVER_URL_INFO, json=info, headers={'authorization': SERVER_TOKEN})
+            if req.status_code != 200: raise Exception(req)
+            req = requests.post(url=SERVER_URL_COLLECTION, json=get_aggregate_stat(), headers={'authorization': SERVER_TOKEN})
+            if req.status_code != 200: raise Exception(req)
+        except Exception as e:
+            raise Exception("[HTTP%d]: %s, %s" % (e.args[0].status_code, e.args[0].text, e.args[0].url))
 
     logging.info("Finish Reporting!")
 
@@ -303,4 +326,5 @@ while True:
         report_once()
     except Exception as e:
         logging.error(e)
+        logging.error("ERROR OCCUR.")
     time.sleep(REPORT_TIME)
