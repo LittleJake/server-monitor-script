@@ -38,6 +38,7 @@ DISK_OPTS_EXCLUDE = os.getenv('DISK_OPTS_EXCLUDE', 'ro').split(",")
 SERVER_URL = os.getenv('SERVER_URL', "")
 REPORT_MODE = os.getenv('REPORT_MODE', "redis").lower()
 SERVER_TOKEN = os.getenv('SERVER_TOKEN', "")
+SOCKET_TIMEOUT = int(os.getenv('SOCKET_TIMEOUT', "10"))
 
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(message)s")
@@ -61,7 +62,8 @@ TIME = math.floor(time.time())
 NET_FORMER = psutil.net_io_counters()
 CPU_INFO = cpuinfo.get_cpu_info()
 
-conn = redis.Redis(host=HOST, password=PASSWORD, port=PORT, ssl=SSL, retry_on_timeout=10)
+if REPORT_MODE == "redis":
+    conn = redis.Redis(host=HOST, password=PASSWORD, port=PORT, ssl=SSL, retry_on_timeout=SOCKET_TIMEOUT)
 
 def get_network():
     global NET_FORMER
@@ -307,11 +309,11 @@ def report_once():
         try:
             if SERVER_TOKEN == "":
                 raise Exception("Please generate server token using `php think token add --uuid %s` on your central server." % UUID)
-            req = requests.post(url=SERVER_URL_HASH, data={'ip': IPV4}, headers={'authorization': SERVER_TOKEN})
+            req = requests.post(url=SERVER_URL_HASH, data={'ip': IPV4}, headers={'authorization': SERVER_TOKEN}, timeout=SOCKET_TIMEOUT)
             if req.status_code != 200: raise Exception(req)
-            req = requests.post(url=SERVER_URL_INFO, json=info, headers={'authorization': SERVER_TOKEN})
+            req = requests.post(url=SERVER_URL_INFO, json=info, headers={'authorization': SERVER_TOKEN}, timeout=SOCKET_TIMEOUT)
             if req.status_code != 200: raise Exception(req)
-            req = requests.post(url=SERVER_URL_COLLECTION, json=get_aggregate_stat(), headers={'authorization': SERVER_TOKEN})
+            req = requests.post(url=SERVER_URL_COLLECTION, json=get_aggregate_stat(), headers={'authorization': SERVER_TOKEN}, timeout=SOCKET_TIMEOUT)
             if req.status_code != 200: raise Exception(req)
         except Exception as e:
             raise Exception("[HTTP%d]: %s, %s" % (e.args[0].status_code, e.args[0].text, e.args[0].url))
