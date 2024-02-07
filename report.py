@@ -54,10 +54,6 @@ SERVER_URL_INFO = "%s/api/report/info/%s" % (SERVER_URL, UUID)
 SERVER_URL_COLLECTION = "%s/api/report/collection/%s" % (SERVER_URL, UUID)
 SERVER_URL_HASH = "%s/api/report/hash/%s" % (SERVER_URL, UUID)
 
-if REPORT_MODE == 'http' and SERVER_TOKEN == "":
-    print("Please generate server token using `php think token add --uuid <UUID>` on your central server.")
-    exit(-1)
-
 IPV4 = None
 IPV6 = None
 COUNTRY = None
@@ -309,6 +305,8 @@ def report_once():
 
     elif REPORT_MODE == 'http':
         try:
+            if SERVER_TOKEN == "":
+                raise Exception("Please generate server token using `php think token add --uuid %s` on your central server." % UUID)
             req = requests.post(url=SERVER_URL_HASH, data={'ip': IPV4}, headers={'authorization': SERVER_TOKEN})
             if req.status_code != 200: raise Exception(req)
             req = requests.post(url=SERVER_URL_INFO, json=info, headers={'authorization': SERVER_TOKEN})
