@@ -50,7 +50,7 @@ else:
     with open('.uuid', 'w') as fp:
         fp.write(UUID)
 
-print("Your UUID is: %s" % UUID)
+logging.info("Your UUID is: %s" % UUID)
 SERVER_URL_INFO = "%s/api/report/info/%s" % (SERVER_URL, UUID)
 SERVER_URL_COLLECTION = "%s/api/report/collection/%s" % (SERVER_URL, UUID)
 SERVER_URL_HASH = "%s/api/report/hash/%s" % (SERVER_URL, UUID)
