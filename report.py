@@ -192,11 +192,10 @@ def get_ipv4():
         resp = get_request(IPV4_API)
         if resp is not None:
             IPV4 = resp.text
-            return IPV4
-        
-        return "None"
-    else:
-        return IPV4
+        else:
+            IPV4 = "None"
+    
+    return IPV4
 
 
 def get_ipv6():
@@ -206,11 +205,10 @@ def get_ipv6():
         resp = get_request(IPV6_API)
         if resp is not None:
             IPV6 = resp.text
-            return IPV6
-        
-        return "None"
-    else:
-        return IPV6
+        else:
+            IPV6 = "None"
+    
+    return IPV6
 
 
 def get_country():
