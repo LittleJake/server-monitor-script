@@ -22,6 +22,7 @@ if getattr(sys, 'frozen', False):
 load_dotenv(dotenv_path=os.path.join(extDataDir, '.env'))
 
 # get .env
+DEBUG_LEVEL = os.getenv("DEBUG_LEVEL", '20')
 HOST = os.getenv("HOST", "127.0.0.1")
 PORT = os.getenv("PORT", "6379")
 PASSWORD = os.getenv("PASSWORD", "")
@@ -41,7 +42,7 @@ SERVER_TOKEN = os.getenv('SERVER_TOKEN', "")
 SOCKET_TIMEOUT = int(os.getenv('SOCKET_TIMEOUT', "10"))
 
 
-logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(message)s")
+logging.basicConfig(level=int(DEBUG_LEVEL), format="%(asctime)s - %(message)s")
 UUID = str(uuid.uuid4()).replace("-", "")
 if os.path.isfile('.uuid'):
     with open('.uuid', 'r') as fp:
@@ -60,6 +61,7 @@ IPV6 = None
 COUNTRY = None
 TIME = math.floor(time.time())
 NET_FORMER = psutil.net_io_counters()
+IO_FORMER = psutil.disk_io_counters()
 CPU_INFO = cpuinfo.get_cpu_info()
 
 if REPORT_MODE == "redis":
@@ -80,6 +82,23 @@ def get_network():
     NET_FORMER = net_temp
     return network
 
+
+def get_io():
+    global IO_FORMER
+    io_temp = psutil.disk_io_counters()
+
+    io = {'read': {
+        'count': (io_temp.read_count - IO_FORMER.read_count) if (io_temp.read_count - IO_FORMER.read_count) > 0 else 0,
+        'bytes': (io_temp.read_bytes - IO_FORMER.read_bytes) if (io_temp.read_bytes - IO_FORMER.read_bytes) > 0 else 0,
+        'time': (io_temp.read_time - IO_FORMER.read_time) if (io_temp.read_time - IO_FORMER.read_time) > 0 else 0,
+    }, 'write': {
+        'count': (io_temp.write_count - IO_FORMER.write_count) if (io_temp.write_count - IO_FORMER.write_count) > 0 else 0,
+        'bytes': (io_temp.write_bytes - IO_FORMER.write_bytes) if (io_temp.write_bytes - IO_FORMER.write_bytes) > 0 else 0,
+        'time': (io_temp.write_time - IO_FORMER.write_time) if (io_temp.write_time - IO_FORMER.write_time) > 0 else 0,
+    }}
+
+    IO_FORMER = io_temp
+    return io
 
 def get_process_num():
     return len(psutil.pids())
@@ -114,6 +133,16 @@ def get_battery():
     result = {}
     try:
         result["percent"] = psutil.sensors_battery().percent
+    except:
+        pass
+    return result
+
+def get_fan():
+    result = {}
+    try:
+        for sensor_type, sensors in psutil.sensors_fans().items():
+            for sensor in sensors:
+                result[sensor_type+":"+sensor.label] = sensor.current
     except:
         pass
     return result
@@ -226,8 +255,14 @@ def get_country():
 
 
 def get_connections():
-    return len(psutil.net_connections())
+    return "TCP: %d, UDP: %d" % (len(psutil.net_connections("tcp")), len(psutil.net_connections("udp")))
 
+def get_throughput():
+    rx = NET_FORMER.bytes_recv/1073741824
+    tx = NET_FORMER.bytes_sent/1073741824
+
+    return "{} / {}".format("↓%.2f TB" % rx/1024 if rx > 1024 else "↓%.2f GB" % rx,
+                         "↑%.2f TB" % tx/1024 if tx > 1024 else "↑%.2f GB" % tx)
 
 def get_uptime():
     t = int(time.time() - psutil.boot_time())
@@ -237,7 +272,6 @@ def get_uptime():
 
 def get_load():
     return dict(psutil.cpu_times_percent()._asdict())
-
 
 def get_aggregate_stat_json():
     return json.dumps(get_aggregate_stat())
@@ -251,6 +285,8 @@ def get_aggregate_stat():
         'Network': get_network(),
         'Thermal': get_temp(),
         'Battery': get_battery(),
+        'Fan': get_fan(),
+        'IO': get_io(),
     }
     logging.debug(info)
     return info
@@ -274,7 +310,7 @@ def report_once():
     logging.debug(TIME)
     logging.debug(COUNTRY[0])
     logging.debug(COUNTRY[1])
-    logging.debug("D: %.2f GB / U: %.2f GB" % (NET_FORMER.bytes_recv/1073741824, NET_FORMER.bytes_sent/1073741824))
+    logging.debug(get_throughput())
 
     info = {
         "CPU": "{}x {}".format(get_cpu_core(), get_cpu_name()),
@@ -288,7 +324,7 @@ def report_once():
         "Update Time": TIME,
         "Country": COUNTRY[0],
         "Country Code": "CN" if COUNTRY[1] in ("TW", "HK", "MO") else COUNTRY[1],
-        "Throughput": "↓%.2f GB / ↑%.2f GB" % (NET_FORMER.bytes_recv/1073741824, NET_FORMER.bytes_sent/1073741824),
+        "Throughput": get_throughput(),
     }
     
     if REPORT_MODE == 'redis':
