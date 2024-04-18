@@ -261,8 +261,8 @@ def get_throughput():
     rx = NET_FORMER.bytes_recv/1073741824
     tx = NET_FORMER.bytes_sent/1073741824
 
-    return "{} / {}".format("↓%.2f TB" % rx/1024 if rx > 1024 else "↓%.2f GB" % rx,
-                         "↑%.2f TB" % tx/1024 if tx > 1024 else "↑%.2f GB" % tx)
+    return "{} / {}".format("↓%.2f TB" % (rx/1024) if rx > 1024 else "↓%.2f GB" % rx,
+                         "↑%.2f TB" % (tx/1024) if tx > 1024 else "↑%.2f GB" % tx)
 
 def get_uptime():
     t = int(time.time() - psutil.boot_time())
