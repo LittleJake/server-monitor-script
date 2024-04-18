@@ -190,7 +190,7 @@ def get_ipv4():
     global IPV4
     if IPV4 is None:
         resp = get_request(IPV4_API)
-        if resp is not None:
+        if resp is not None and re.match("[0-9]*\.[0-9]*\.[0-9]*",resp.text) is not None:
             IPV4 = resp.text
         else:
             IPV4 = "None"
@@ -203,7 +203,7 @@ def get_ipv6():
     global IPV6
     if IPV6 is None:
         resp = get_request(IPV6_API)
-        if resp is not None:
+        if resp is not None and re.match("[a-zA-Z0-9]*:",resp.text) is not None:
             IPV6 = resp.text
         else:
             IPV6 = "None"
