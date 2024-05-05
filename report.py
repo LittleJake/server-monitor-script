@@ -60,16 +60,31 @@ IPV4 = None
 IPV6 = None
 COUNTRY = None
 TIME = math.floor(time.time())
-NET_FORMER = psutil.net_io_counters()
-IO_FORMER = psutil.disk_io_counters()
-CPU_INFO = cpuinfo.get_cpu_info()
 
 if REPORT_MODE == "redis":
     conn = redis.Redis(host=HOST, password=PASSWORD, port=PORT, ssl=SSL, retry_on_timeout=SOCKET_TIMEOUT)
 
+def net_io_counters():
+    try:
+        return psutil.net_io_counters()
+    except Exception as e:
+        logging.error(e)
+        return None
+    
+
+def disk_io_counters():
+    try:
+        return psutil.disk_io_counters()
+    except Exception as e:
+        logging.error(e)
+        return None
+
+
 def get_network():
     global NET_FORMER
-    net_temp = psutil.net_io_counters()
+    if NET_FORMER is None: return {}
+
+    net_temp = net_io_counters()
 
     network = {'RX': {
         'bytes': (net_temp.bytes_recv - NET_FORMER.bytes_recv) if (net_temp.bytes_recv - NET_FORMER.bytes_recv) > 0 else 0,
@@ -85,6 +100,8 @@ def get_network():
 
 def get_io():
     global IO_FORMER
+    if IO_FORMER is None: return {}
+
     io_temp = psutil.disk_io_counters()
 
     io = {'read': {
@@ -354,6 +371,11 @@ def report_once():
 
     logging.info("Finish Reporting!")
 
+
+
+NET_FORMER = net_io_counters()
+IO_FORMER = disk_io_counters()
+CPU_INFO = cpuinfo.get_cpu_info()
 
 while True:
     try:
