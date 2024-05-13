@@ -13,6 +13,21 @@ server-monitor-script
 
 ### 安装
 
+
+#### Docker
+
+```bash
+git clone https://github.com/LittleJake/server-monitor-script/
+
+# 编辑.env.example文件保存为.env文件
+cp .env.example .env
+vim .env
+
+docker build -t server-monitor-script:latest ./
+docker run -d server-monitor-script:latest
+
+```
+
 #### Linux
 
 ```bash
@@ -36,6 +51,8 @@ git clone https://github.com/LittleJake/server-monitor-script/
 
 pip3 install -r requirements.txt
 # 编辑.env.example文件保存为.env文件
+copy .env.example .env
+notepad .env
 
 # 运行服务
 python3 report.py
