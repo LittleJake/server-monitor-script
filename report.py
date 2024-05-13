@@ -236,7 +236,7 @@ def get_ipv4():
     global IPV4
     if IPV4 is None:
         resp = get_request(IPV4_API)
-        if resp is not None and re.match("[0-9]*\.[0-9]*\.[0-9]*",resp.text) is not None:
+        if resp is not None and re.match("[0-9]*\\.[0-9]*\\.[0-9]*",resp.text) is not None:
             IPV4 = resp.text
         else:
             IPV4 = "None"
@@ -318,7 +318,7 @@ def report_once():
     COUNTRY = get_country()
     logging.debug("{}x {}".format(get_cpu_core(), get_cpu_name()))
     logging.debug(get_sys_version())
-    logging.debug(re.sub("[0-9]*\.[0-9]*\.[0-9]*", "*.*.*", get_ipv4()))
+    logging.debug(re.sub("[0-9]*\\.[0-9]*\\.[0-9]*", "*.*.*", get_ipv4()))
     logging.debug(re.sub("[a-zA-Z0-9]*:", "*:", get_ipv6()))
     logging.debug(get_uptime())
     logging.debug(get_connections())
@@ -332,7 +332,7 @@ def report_once():
     info = {
         "CPU": "{}x {}".format(get_cpu_core(), get_cpu_name()),
         "System Version": get_sys_version(),
-        "IPV4": re.sub("[0-9]*\.[0-9]*\.[0-9]*", "*.*.*", get_ipv4()),
+        "IPV4": re.sub("[0-9]*\\.[0-9]*\\.[0-9]*", "*.*.*", get_ipv4()),
         "IPV6": re.sub("[a-zA-Z0-9]*:", "*:", get_ipv6()),
         'Uptime': get_uptime(),
         'Connection': get_connections(),
