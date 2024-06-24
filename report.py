@@ -36,6 +36,7 @@ RETENTION_TIME = int(os.getenv('RETENTION_TIME', '86400'))
 DISK_EXCLUDE = os.getenv('DISK_EXCLUDE','/run,/sys,/boot,/dev,/proc,/var/lib').split(",")
 DISK_FS_EXCLUDE = os.getenv('DISK_FS_EXCLUDE', 'tmpfs,overlay').split(",")
 DISK_OPTS_EXCLUDE = os.getenv('DISK_OPTS_EXCLUDE', 'ro').split(",")
+PROCFS_PATH = os.getenv('PROCFS_PATH', '/proc')
 SERVER_URL = os.getenv('SERVER_URL', "")
 REPORT_MODE = os.getenv('REPORT_MODE', "redis").lower()
 SERVER_TOKEN = os.getenv('SERVER_TOKEN', "")
@@ -60,6 +61,7 @@ IPV4 = None
 IPV6 = None
 COUNTRY = None
 TIME = math.floor(time.time())
+psutil.PROCFS_PATH = PROCFS_PATH
 
 if REPORT_MODE == "redis":
     conn = redis.Redis(host=HOST, password=PASSWORD, port=PORT, ssl=SSL, retry_on_timeout=SOCKET_TIMEOUT)

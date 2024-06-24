@@ -24,7 +24,7 @@ cp .env.example .env
 vim .env
 
 docker build -t server-monitor-script:latest ./
-docker run -d server-monitor-script:latest
+docker run -v /:/rootfs:ro -d server-monitor-script:latest monitor
 
 ```
 
