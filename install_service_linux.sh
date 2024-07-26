@@ -8,6 +8,7 @@ case `uname` in
         mkdir -p /usr/local/monitor
         \cp -f .env /usr/local/monitor
         \cp -f report.py /usr/local/monitor
+        \cp -f ip.json /usr/local/monitor
 
         cat > /etc/local.d/monitor.start << EOF
 cd /usr/local/monitor/
@@ -24,6 +25,7 @@ EOF
         mkdir -p /usr/local/monitor
         \cp -f report.py /usr/local/monitor
         \cp -f .env /usr/local/monitor
+        \cp -f ip.json /usr/local/monitor
 
         cat > /lib/systemd/system/monitor.service << EOF
 [Unit]
