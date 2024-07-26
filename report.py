@@ -14,6 +14,10 @@ import distro
 import platform
 from datetime import timedelta
 from dotenv import load_dotenv, find_dotenv
+import concurrent.futures
+import ping3
+
+VERSION = "Alpha-2024.07.26-01"
 
 # get .env location for pyinstaller
 extDataDir = os.getcwd()
@@ -42,8 +46,12 @@ REPORT_MODE = os.getenv('REPORT_MODE', "redis").lower()
 SERVER_TOKEN = os.getenv('SERVER_TOKEN', "")
 SOCKET_TIMEOUT = int(os.getenv('SOCKET_TIMEOUT', "10"))
 
+PING_CONCURRENT = int(os.getenv('PING_CONCURRENT', "10"))
+
 
 logging.basicConfig(level=int(DEBUG_LEVEL), format="%(asctime)s - %(message)s")
+
+# Loading UUID
 UUID = str(uuid.uuid4()).replace("-", "")
 if os.path.isfile('.uuid'):
     with open('.uuid', 'r') as fp:
@@ -53,6 +61,8 @@ else:
         fp.write(UUID)
 
 logging.info("Your UUID is: %s" % UUID)
+
+# setting http api upload
 SERVER_URL_INFO = "%s/api/report/info/%s" % (SERVER_URL, UUID)
 SERVER_URL_COLLECTION = "%s/api/report/collection/%s" % (SERVER_URL, UUID)
 SERVER_URL_HASH = "%s/api/report/hash/%s" % (SERVER_URL, UUID)
@@ -65,6 +75,15 @@ psutil.PROCFS_PATH = PROCFS_PATH
 
 if REPORT_MODE == "redis":
     conn = redis.Redis(host=HOST, password=PASSWORD, port=PORT, ssl=SSL, retry_on_timeout=SOCKET_TIMEOUT)
+
+PING_IP = {}
+# get ip.json
+try:
+    with open("ip.json", "r") as fp:
+        PING_IP = json.load(fp)
+except Exception as e:
+    logging.info("Error occur when loading ip.json, skipping")
+
 
 def net_io_counters():
     try:
@@ -233,6 +252,15 @@ def get_request(url=''):
 
     return None
 
+
+def ping(name, ip):
+    response = ping3.ping(ip, unit="ms")
+    if response is None:
+        return {name: "-1"}
+    else:
+        return {name: "%.2f" % response}
+
+
 def get_ipv4():
     # interface ipv4
     global IPV4
@@ -292,20 +320,36 @@ def get_uptime():
 def get_load():
     return dict(psutil.cpu_times_percent()._asdict())
 
+def do_tcping(url, v6=False):
+    get_request(url)
+
+def get_ping():
+    ping_result = {}
+    with concurrent.futures.ThreadPoolExecutor(max_workers=PING_CONCURRENT) as executor:
+        futures = [executor.submit(ping, name, ip) for name, ip in PING_IP.items()]
+
+        for future in concurrent.futures.as_completed(futures):
+            result = future.result()
+            ping_result.update(result)
+            logging.debug(result)
+
+    return ping_result
+
 def get_aggregate_stat_json():
     return json.dumps(get_aggregate_stat())
 
 
 def get_aggregate_stat():
     info = {
-        'Disk': get_disk_info(),
-        'Memory': get_mem_info(),
-        'Load': get_load(),
-        'Network': get_network(),
-        'Thermal': get_temp(),
         'Battery': get_battery(),
+        'Disk': get_disk_info(),
         'Fan': get_fan(),
         'IO': get_io(),
+        'Load': get_load(),
+        'Memory': get_mem_info(),
+        'Network': get_network(),
+        'Ping': get_ping(),
+        'Thermal': get_temp(),
     }
     logging.debug(info)
     return info
@@ -332,18 +376,19 @@ def report_once():
     logging.debug(get_throughput())
 
     info = {
-        "CPU": "{}x {}".format(get_cpu_core(), get_cpu_name()),
-        "System Version": get_sys_version(),
-        "IPV4": re.sub("[0-9]*\\.[0-9]*\\.[0-9]*", "*.*.*", get_ipv4()),
-        "IPV6": re.sub("[a-zA-Z0-9]*:", "*:", get_ipv6()),
-        'Uptime': get_uptime(),
         'Connection': get_connections(),
-        'Process': get_process_num(),
-        'Load Average': get_load_average(),
-        "Update Time": TIME,
         "Country": COUNTRY[0],
         "Country Code": "CN" if COUNTRY[1] in ("TW", "HK", "MO") else COUNTRY[1],
+        "CPU": "{}x {}".format(get_cpu_core(), get_cpu_name()),
+        "IPV4": re.sub("[0-9]*\\.[0-9]*\\.[0-9]*", "*.*.*", get_ipv4()),
+        "IPV6": re.sub("[a-zA-Z0-9]*:", "*:", get_ipv6()),
+        'Load Average': get_load_average(),
+        'Process': get_process_num(),
+        "System Version": get_sys_version(),
         "Throughput": get_throughput(),
+        "Update Time": TIME,
+        'Uptime': get_uptime(),
+        "Agent Version": VERSION
     }
     
     if REPORT_MODE == 'redis':
@@ -372,7 +417,6 @@ def report_once():
             raise Exception("[HTTP%d]: %s, %s" % (e.args[0].status_code, e.args[0].text, e.args[0].url))
 
     logging.info("Finish Reporting!")
-
 
 
 NET_FORMER = net_io_counters()
