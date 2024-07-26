@@ -256,7 +256,7 @@ def get_request(url=''):
 def ping(name, ip):
     response = ping3.ping(ip, unit="ms")
     if response is None:
-        return {name: "-1"}
+        return {name: "0"}
     else:
         return {name: "%.2f" % response}
 
