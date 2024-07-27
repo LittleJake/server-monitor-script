@@ -23,6 +23,10 @@ git clone https://github.com/LittleJake/server-monitor-script/
 cp .env.example .env
 vim .env
 
+# 编辑ip.json文件
+cp ip.json.example ip.json
+vim ip.json
+
 docker build -t server-monitor-script:latest ./
 docker run -v /:/rootfs:ro --name monitor -d server-monitor-script:latest
 
@@ -39,6 +43,10 @@ pip3 install -r requirements.txt
 cp .env.example .env
 vim .env
 
+# 编辑ip.json文件
+cp ip.json.example ip.json
+vim ip.json
+
 # 安装服务CentOS/Debian/Ubuntu
 bash install_service_linux.sh
 
@@ -50,9 +58,14 @@ bash install_service_linux.sh
 git clone https://github.com/LittleJake/server-monitor-script/
 
 pip3 install -r requirements.txt
+
 # 编辑.env.example文件保存为.env文件
 copy .env.example .env
 notepad .env
+
+# 编辑ip.json文件
+copy ip.json.example ip.json
+notepad ip.json
 
 # 运行服务
 python3 report.py
