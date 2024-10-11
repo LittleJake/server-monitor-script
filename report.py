@@ -190,13 +190,11 @@ def get_mem_info():
         'total': '%.2f' % (psutil.virtual_memory().total*1.0/1048576),
         'used': '%.2f' % (psutil.virtual_memory().used*1.0/1048576),
         'free': '%.2f' % (psutil.virtual_memory().free*1.0/1048576),
-        'available': '%.2f' % (psutil.virtual_memory().available*1.0/1048576),
         'percent': psutil.virtual_memory().percent,
     }, 'Swap': {
         'total': '%.2f' % (psutil.swap_memory().total*1.0/1048576),
         'used': '%.2f' % (psutil.swap_memory().used*1.0/1048576),
         'free': '%.2f' % (psutil.swap_memory().free*1.0/1048576),
-        'available': '%.2f' % (psutil.swap_memory().available*1.0/1048576),
         'percent': psutil.swap_memory().percent,
     }}
     return info
