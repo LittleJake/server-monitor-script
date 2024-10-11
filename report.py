@@ -17,7 +17,7 @@ from dotenv import load_dotenv, find_dotenv
 import concurrent.futures
 import ping3
 
-VERSION = "Alpha-2024.07.26-01"
+VERSION = "Alpha-2024.10.11-01"
 
 # get .env location for pyinstaller
 extDataDir = os.getcwd()
@@ -190,11 +190,13 @@ def get_mem_info():
         'total': '%.2f' % (psutil.virtual_memory().total*1.0/1048576),
         'used': '%.2f' % (psutil.virtual_memory().used*1.0/1048576),
         'free': '%.2f' % (psutil.virtual_memory().free*1.0/1048576),
+        'available': '%.2f' % (psutil.virtual_memory().available*1.0/1048576),
         'percent': psutil.virtual_memory().percent,
     }, 'Swap': {
         'total': '%.2f' % (psutil.swap_memory().total*1.0/1048576),
         'used': '%.2f' % (psutil.swap_memory().used*1.0/1048576),
         'free': '%.2f' % (psutil.swap_memory().free*1.0/1048576),
+        'available': '%.2f' % (psutil.swap_memory().available*1.0/1048576),
         'percent': psutil.swap_memory().percent,
     }}
     return info
