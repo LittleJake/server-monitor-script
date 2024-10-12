@@ -17,7 +17,7 @@ from dotenv import load_dotenv, find_dotenv
 import concurrent.futures
 import ping3
 
-VERSION = "Alpha-2024.10.11-01"
+VERSION = "Alpha-2024.10.12-01"
 
 # get .env location for pyinstaller
 extDataDir = os.getcwd()
@@ -295,6 +295,12 @@ def get_country():
         resp = get_request(IP_API)
         if resp is not None:
             j = resp.json()
+            if j["country"] in ("Hong Kong", "Macao"):
+                j["country"] = j["country"] + ", SAR"
+            elif j["country"] == "Taiwan":
+                j["country"] = j["country"] + " Province"
+                j["countryCode"] = "CN"
+
             COUNTRY = (j["country"], j["countryCode"])
             return COUNTRY
 
@@ -380,7 +386,7 @@ def report_once():
     info = {
         'Connection': get_connections(),
         "Country": COUNTRY[0],
-        "Country Code": "CN" if COUNTRY[1] in ("TW", "HK", "MO") else COUNTRY[1],
+        "Country Code": COUNTRY[1],
         "CPU": "{}x {}".format(get_cpu_core(), get_cpu_name()),
         "IPV4": re.sub("[0-9]*\\.[0-9]*\\.[0-9]*", "*.*.*", get_ipv4()),
         "IPV6": re.sub("[a-zA-Z0-9]*:", "*:", get_ipv6()),
