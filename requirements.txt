@@ -5,3 +5,4 @@ requests
 redis
 python-dotenv
 ping3
+ipapi
