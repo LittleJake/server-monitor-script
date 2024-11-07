@@ -254,11 +254,16 @@ def get_request(url=''):
 
 
 def ping(name, ip):
-    response = ping3.ping(ip, unit="ms")
-    if response is None:
+    try:
+        response = ping3.ping(ip, unit="ms")
+        if response is None:
+            return {name: "0"}
+        else:
+            return {name: "%.2f" % response}
+    except Exception as e:
+        logging.debug(e)
         return {name: "0"}
-    else:
-        return {name: "%.2f" % response}
+
 
 
 def get_ipv4():
