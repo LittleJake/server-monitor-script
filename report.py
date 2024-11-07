@@ -16,6 +16,7 @@ from datetime import timedelta
 from dotenv import load_dotenv, find_dotenv
 import concurrent.futures
 import ping3
+import ipapi
 
 VERSION = "Alpha-2024.10.12-01"
 
@@ -33,7 +34,6 @@ PASSWORD = os.getenv("PASSWORD", "")
 SSL = os.getenv("SSL", 'False').lower() in ('true', '1', 't')
 IPV4_API = os.getenv('IPV4_API', "https://api.ipify.org")
 IPV6_API = os.getenv('IPV6_API', "https://api6.ipify.org")
-IP_API = os.getenv('IP_API', "http://ip-api.com/json?fields=country,countryCode")
 REPORT_TIME = int(os.getenv('REPORT_TIME', '60'))
 DATA_TIMEOUT = int(os.getenv('DATA_TIMEOUT', '259200'))
 RETENTION_TIME = int(os.getenv('RETENTION_TIME', '86400'))
@@ -298,16 +298,15 @@ def get_ipv6():
 def get_country():
     global COUNTRY
     if COUNTRY is None:
-        resp = get_request(IP_API)
-        if resp is not None:
-            j = resp.json()
-            if j["country"] in ("Hong Kong", "Macao"):
-                j["country"] = j["country"] + ", SAR"
-            elif j["country"] == "Taiwan":
-                j["country"] = j["country"] + " Province"
-                j["countryCode"] = "CN"
+        j = ipapi.location()
+        if j is not None:
+            if j["country_name"] in ("Hong Kong", "Macao"):
+                j["country_name"] = j["country_name"] + ", SAR"
+            elif j["country_name"] == "Taiwan":
+                j["country_name"] = j["country_name"] + " Province"
+                j["country_code"] = "CN"
 
-            COUNTRY = (j["country"], j["countryCode"])
+            COUNTRY = (j["country"], j["country_code"])
             return COUNTRY
 
         return ("Unknown", "Unknown")
