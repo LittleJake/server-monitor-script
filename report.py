@@ -306,7 +306,7 @@ def get_country():
                 j["country_name"] = j["country_name"] + " Province"
                 j["country_code"] = "CN"
 
-            COUNTRY = (j["country"], j["country_code"])
+            COUNTRY = (j["country_name"], j["country_code"])
             return COUNTRY
 
         return ("Unknown", "Unknown")
