@@ -32,6 +32,7 @@ HOST = os.getenv("HOST", "127.0.0.1")
 PORT = os.getenv("PORT", "6379")
 PASSWORD = os.getenv("PASSWORD", "")
 SSL = os.getenv("SSL", 'False').lower() in ('true', '1', 't')
+REPORT_ONCE = os.getenv("REPORT_ONCE", 'False').lower() in ('true', '1', 't')
 IPV4_API = os.getenv('IPV4_API', "https://api.ipify.org")
 IPV6_API = os.getenv('IPV6_API', "https://api6.ipify.org")
 REPORT_TIME = int(os.getenv('REPORT_TIME', '60'))
@@ -431,14 +432,34 @@ def report_once():
 
     logging.info("Finish Reporting!")
 
+def save_state():
+    global NET_FORMER, IO_FORMER
+    with open("dump", "w") as fp:
+        fp.write(json.dumps({'NET_FORMER': NET_FORMER,'IO_FORMER': IO_FORMER}))
+       
+
+def get_state():
+    global NET_FORMER, IO_FORMER
+    try:
+        with open("dump", "r") as fp:
+            data = json.loads(fp.read())
+            NET_FORMER = data['NET_FORMER']
+            IO_FORMER = data['IO_FORMER']
+    except:
+        logging.info("Former data missing or invalid.")
+        pass
 
 NET_FORMER = net_io_counters()
 IO_FORMER = disk_io_counters()
 CPU_INFO = cpuinfo.get_cpu_info()
 
-while True:
+while not REPORT_ONCE:
     try:
+        if REPORT_ONCE: get_state()
         report_once()
+        if REPORT_ONCE: 
+            save_state()
+            exit(0)
     except Exception as e:
         logging.error(e)
         logging.error("ERROR OCCUR.")
