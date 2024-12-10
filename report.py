@@ -18,7 +18,7 @@ import concurrent.futures
 import ping3
 import ipapi
 
-VERSION = "Alpha-2024.11.07-01"
+VERSION = "Alpha-2024.12.10-01"
 
 # get .env location for pyinstaller
 extDataDir = os.getcwd()
@@ -88,7 +88,7 @@ except Exception as e:
 
 def net_io_counters():
     try:
-        return psutil.net_io_counters()
+        return psutil.net_io_counters()._asdict()
     except Exception as e:
         logging.error(e)
         return None
@@ -96,7 +96,7 @@ def net_io_counters():
 
 def disk_io_counters():
     try:
-        return psutil.disk_io_counters()
+        return psutil.disk_io_counters()._asdict()
     except Exception as e:
         logging.error(e)
         return None
@@ -109,11 +109,11 @@ def get_network():
     net_temp = net_io_counters()
 
     network = {'RX': {
-        'bytes': (net_temp.bytes_recv - NET_FORMER.bytes_recv) if (net_temp.bytes_recv - NET_FORMER.bytes_recv) > 0 else 0,
-        'packets': (net_temp.packets_recv - NET_FORMER.packets_recv) if (net_temp.packets_recv - NET_FORMER.packets_recv) > 0 else 0,
+        'bytes': (net_temp.get("bytes_recv") - NET_FORMER.get("bytes_recv")) if (net_temp.get("bytes_recv") - NET_FORMER.get("bytes_recv")) > 0 else 0,
+        'packets': (net_temp.get("packets_recv") - NET_FORMER.get("packets_recv")) if (net_temp.get("packets_recv") - NET_FORMER.get("packets_recv")) > 0 else 0,
     }, 'TX': {
-        'bytes': (net_temp.bytes_sent - NET_FORMER.bytes_sent) if (net_temp.bytes_sent - NET_FORMER.bytes_sent) > 0 else 0,
-        'packets': (net_temp.packets_sent - NET_FORMER.packets_sent) if (net_temp.packets_sent - NET_FORMER.packets_sent) > 0 else 0,
+        'bytes': (net_temp.get("bytes_sent") - NET_FORMER.get("bytes_sent")) if (net_temp.get("bytes_sent") - NET_FORMER.get("bytes_sent")) > 0 else 0,
+        'packets': (net_temp.get("packets_sent") - NET_FORMER.get("packets_sent")) if (net_temp.get("packets_sent") - NET_FORMER.get("packets_sent")) > 0 else 0,
     }}
 
     NET_FORMER = net_temp
@@ -124,16 +124,16 @@ def get_io():
     global IO_FORMER
     if IO_FORMER is None: return {}
 
-    io_temp = psutil.disk_io_counters()
+    io_temp = disk_io_counters()
 
     io = {'read': {
-        'count': (io_temp.read_count - IO_FORMER.read_count) if (io_temp.read_count - IO_FORMER.read_count) > 0 else 0,
-        'bytes': (io_temp.read_bytes - IO_FORMER.read_bytes) if (io_temp.read_bytes - IO_FORMER.read_bytes) > 0 else 0,
-        'time': (io_temp.read_time - IO_FORMER.read_time) if (io_temp.read_time - IO_FORMER.read_time) > 0 else 0,
+        'count': (io_temp.get("read_count") - IO_FORMER.get("read_count")) if (io_temp.get("read_count") - IO_FORMER.get("read_count")) > 0 else 0,
+        'bytes': (io_temp.get("read_bytes") - IO_FORMER.get("read_bytes")) if (io_temp.get("read_bytes") - IO_FORMER.get("read_bytes")) > 0 else 0,
+        'time': (io_temp.get("read_time") - IO_FORMER.get("read_time")) if (io_temp.get("read_time") - IO_FORMER.get("read_time")) > 0 else 0,
     }, 'write': {
-        'count': (io_temp.write_count - IO_FORMER.write_count) if (io_temp.write_count - IO_FORMER.write_count) > 0 else 0,
-        'bytes': (io_temp.write_bytes - IO_FORMER.write_bytes) if (io_temp.write_bytes - IO_FORMER.write_bytes) > 0 else 0,
-        'time': (io_temp.write_time - IO_FORMER.write_time) if (io_temp.write_time - IO_FORMER.write_time) > 0 else 0,
+        'count': (io_temp.get("write_count") - IO_FORMER.get("write_count")) if (io_temp.get("write_count") - IO_FORMER.get("write_count")) > 0 else 0,
+        'bytes': (io_temp.get("write_bytes") - IO_FORMER.get("write_bytes")) if (io_temp.get("write_bytes") - IO_FORMER.get("write_bytes")) > 0 else 0,
+        'time': (io_temp.get("write_time") - IO_FORMER.get("write_time")) if (io_temp.get("write_time") - IO_FORMER.get("write_time")) > 0 else 0,
     }}
 
     IO_FORMER = io_temp
@@ -299,7 +299,7 @@ def get_ipv6():
 def get_country():
     global COUNTRY
     if COUNTRY is None:
-        j = ipapi.location()
+        j = ipapi.location(options={"timeout": SOCKET_TIMEOUT})
         if j is not None:
             if j["country_name"] in ("Hong Kong", "Macao"):
                 j["country_name"] = j["country_name"] + ", SAR"
@@ -319,8 +319,8 @@ def get_connections():
     return "TCP: %d, UDP: %d" % (len(psutil.net_connections("tcp")), len(psutil.net_connections("udp")))
 
 def get_throughput():
-    rx = NET_FORMER.bytes_recv/1073741824
-    tx = NET_FORMER.bytes_sent/1073741824
+    rx = NET_FORMER.get("bytes_recv")/1073741824
+    tx = NET_FORMER.get("bytes_sent")/1073741824
 
     return "{} / {}".format("↓%.2f TB" % (rx/1024) if rx > 1024 else "↓%.2f GB" % rx,
                          "↑%.2f TB" % (tx/1024) if tx > 1024 else "↑%.2f GB" % tx)
@@ -435,7 +435,7 @@ def report_once():
 def save_state():
     global NET_FORMER, IO_FORMER
     with open("dump", "w") as fp:
-        fp.write(json.dumps({'NET_FORMER': NET_FORMER._asdict() if NET_FORMER is not None else None,'IO_FORMER': IO_FORMER._asdict() if IO_FORMER is not None else None}))
+        fp.write(json.dumps({'NET_FORMER': NET_FORMER,'IO_FORMER': IO_FORMER}))
        
 
 def get_state():
