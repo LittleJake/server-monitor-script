@@ -435,7 +435,7 @@ def report_once():
 def save_state():
     global NET_FORMER, IO_FORMER
     with open("dump", "w") as fp:
-        fp.write(json.dumps({'NET_FORMER': NET_FORMER,'IO_FORMER': IO_FORMER}))
+        fp.write(json.dumps({'NET_FORMER': NET_FORMER._asdict() if NET_FORMER is not None else None,'IO_FORMER': IO_FORMER._asdict() if IO_FORMER is not None else None}))
        
 
 def get_state():
