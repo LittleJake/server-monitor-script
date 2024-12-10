@@ -455,12 +455,13 @@ CPU_INFO = cpuinfo.get_cpu_info()
 
 while not REPORT_ONCE:
     try:
-        if REPORT_ONCE: get_state()
         report_once()
-        if REPORT_ONCE: 
-            save_state()
-            exit(0)
     except Exception as e:
         logging.error(e)
         logging.error("ERROR OCCUR.")
     time.sleep(REPORT_TIME)
+
+get_state()
+report_once()
+save_state()
+exit(0)
