@@ -295,11 +295,20 @@ def get_ipv6():
     
     return IPV6
 
-
-def get_country():
-    global COUNTRY
+def get_country_ipapi1():
+    global COUNTRY,SOCKET_TIMEOUT
+    
     if COUNTRY is None:
-        j = ipapi.location(options={"timeout": SOCKET_TIMEOUT})
+        try:
+            j = ipapi.location(options={"timeout": SOCKET_TIMEOUT})
+        except Exception as e: 
+            logging.error(e)
+            try:
+                j = get_request("https://ip-api.io/json").json()
+            except Exception as e:
+                logging.error(e)
+                return None
+        
         if j is not None:
             if j["country_name"] in ("Hong Kong", "Macao"):
                 j["country_name"] = j["country_name"] + ", SAR"
@@ -308,11 +317,34 @@ def get_country():
                 j["country_code"] = "CN"
 
             COUNTRY = (j["country_name"], j["country_code"])
-            return COUNTRY
 
-        return ("Unknown", "Unknown")
-    else:
-        return COUNTRY
+
+def get_country_ipapi2():
+    global COUNTRY,SOCKET_TIMEOUT
+    
+    if COUNTRY is None:
+        try:
+            j = get_request("http://ip-api.com/json/?fields=country,countryCode").json()
+        except Exception as e: 
+            logging.error(e)
+            return None
+        
+        if j is not None:
+            if j["country"] in ("Hong Kong", "Macao"):
+                j["country"] = j["country"] + ", SAR"
+            elif j["country"] == "Taiwan":
+                j["country"] = j["country"] + " Province"
+                j["countryCode"] = "CN"
+
+            COUNTRY = (j["country"], j["countryCode"])
+
+
+def get_country():
+    global COUNTRY
+    get_country_ipapi1()
+    get_country_ipapi2()
+
+    return ("Unknown", "Unknown") if COUNTRY is None else COUNTRY
 
 
 def get_connections():
@@ -433,18 +465,19 @@ def report_once():
     logging.info("Finish Reporting!")
 
 def save_state():
-    global NET_FORMER, IO_FORMER
+    global NET_FORMER, IO_FORMER, COUNTRY
     with open("dump", "w") as fp:
-        fp.write(json.dumps({'NET_FORMER': NET_FORMER,'IO_FORMER': IO_FORMER}))
+        fp.write(json.dumps({'NET_FORMER': NET_FORMER,'IO_FORMER': IO_FORMER, 'COUNTRY': COUNTRY}))
        
 
 def get_state():
-    global NET_FORMER, IO_FORMER
+    global NET_FORMER, IO_FORMER, COUNTRY
     try:
         with open("dump", "r") as fp:
             data = json.loads(fp.read())
             NET_FORMER = data['NET_FORMER']
             IO_FORMER = data['IO_FORMER']
+            COUNTRY = data['COUNTRY']
     except:
         logging.info("Former data missing or invalid.")
         pass
