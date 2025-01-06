@@ -18,7 +18,7 @@ import concurrent.futures
 import ping3
 import ipapi
 
-VERSION = "Alpha-2024.12.10-01"
+VERSION = "Alpha-2025.01.06-01"
 
 # get .env location for pyinstaller
 extDataDir = os.getcwd()
@@ -46,7 +46,6 @@ SERVER_URL = os.getenv('SERVER_URL', "")
 REPORT_MODE = os.getenv('REPORT_MODE', "redis").lower()
 SERVER_TOKEN = os.getenv('SERVER_TOKEN', "")
 SOCKET_TIMEOUT = int(os.getenv('SOCKET_TIMEOUT', "10"))
-
 PING_CONCURRENT = int(os.getenv('PING_CONCURRENT', "10"))
 
 
@@ -67,6 +66,7 @@ logging.info("Your UUID is: %s" % UUID)
 SERVER_URL_INFO = "%s/api/report/info/%s" % (SERVER_URL, UUID)
 SERVER_URL_COLLECTION = "%s/api/report/collection/%s" % (SERVER_URL, UUID)
 SERVER_URL_HASH = "%s/api/report/hash/%s" % (SERVER_URL, UUID)
+SERVER_URL_COMMAND = "%s/api/report/command/%s" % (SERVER_URL, UUID)
 
 IPV4 = None
 IPV6 = None
@@ -482,6 +482,42 @@ def get_state():
         logging.info("Former data missing or invalid.")
         pass
 
+def get_command():
+    if REPORT_MODE == 'redis':
+        return conn.rpop("system_monitor:command:" + UUID)
+    elif REPORT_MODE == 'http':
+        try:
+            return requests.get(url=SERVER_URL_COMMAND, headers={'authorization': SERVER_TOKEN}, timeout=SOCKET_TIMEOUT).json()
+        except Exception as e:
+            logging.error(e)
+            return None
+
+
+def reboot_system():
+    current_os = platform.system()
+    
+    if current_os == "Windows":
+        os.system("shutdown /r /t 0")
+    elif current_os == "Linux":
+        os.system("sudo reboot")
+    else:
+        raise NotImplementedError("Reboot command not implemented for this OS")
+    
+
+def execute_command():
+    command = get_command()
+    if command is not None:
+        logging.info("Executing command: %s" % command)
+
+        if command == b"reboot":
+            logging.info("Rebooting...")
+            reboot_system()
+        elif command == b"ping":
+            logging.info("Pong!!")
+        else:
+            logging.info("Command not recognized.")
+
+# Main
 NET_FORMER = net_io_counters()
 IO_FORMER = disk_io_counters()
 CPU_INFO = cpuinfo.get_cpu_info()
@@ -489,12 +525,19 @@ CPU_INFO = cpuinfo.get_cpu_info()
 while not REPORT_ONCE:
     try:
         report_once()
+        execute_command()
     except Exception as e:
         logging.error(e)
         logging.error("ERROR OCCUR.")
     time.sleep(REPORT_TIME)
 
-get_state()
-report_once()
-save_state()
-exit(0)
+try:
+    get_state()
+    report_once()
+    execute_command()
+    save_state()
+    exit(0)
+except Exception as e:
+    logging.error(e)
+    logging.error("ERROR OCCUR.")
+    exit(1)
