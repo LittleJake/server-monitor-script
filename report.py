@@ -273,7 +273,7 @@ def get_ipv4():
     if IPV4 is None:
         try:
             resp = get_request(IPV4_API)
-            if resp is not None and re.match("[0-9]*\\.[0-9]*\\.[0-9]*",resp.text) is not None:
+            if resp is not None and re.match("\d*\\.\d*\\.\d*",resp.text) is not None:
                 IPV4 = resp.text
             else:
                 IPV4 = "None"
@@ -287,7 +287,7 @@ def get_ipv6():
     if IPV6 is None:
         try:
             resp = get_request(IPV6_API)
-            if resp is not None and re.match("[a-zA-Z0-9]*:",resp.text) is not None:
+            if resp is not None and re.match("[a-fA-F0-9]*:",resp.text) is not None:
                 IPV6 = resp.text
             else:
                 IPV6 = "None"
@@ -366,8 +366,9 @@ def get_uptime():
 def get_load():
     return dict(psutil.cpu_times_percent()._asdict())
 
-def do_tcping(url, v6=False):
-    get_request(url)
+# TODO: Implement TCPing
+# def do_tcping(url, v6=False):
+#     get_request(url)
 
 def get_ping():
     ping_result = {}
@@ -410,8 +411,8 @@ def report_once():
     COUNTRY = get_country()
     logging.debug("{}x {}".format(get_cpu_core(), get_cpu_name()))
     logging.debug(get_sys_version())
-    logging.debug(re.sub("[0-9]*\\.[0-9]*\\.[0-9]*", "*.*.*", get_ipv4()))
-    logging.debug(re.sub("[a-zA-Z0-9]*:", "*:", get_ipv6()))
+    logging.debug(re.sub("\d*\\.\d*\\.\d*", "*.*.*", get_ipv4()))
+    logging.debug(re.sub("[a-fA-F0-9]*:", "*:", get_ipv6()))
     logging.debug(get_uptime())
     logging.debug(get_connections())
     logging.debug(get_process_num())
@@ -426,8 +427,8 @@ def report_once():
         "Country": COUNTRY[0],
         "Country Code": COUNTRY[1],
         "CPU": "{}x {}".format(get_cpu_core(), get_cpu_name()),
-        "IPV4": re.sub("[0-9]*\\.[0-9]*\\.[0-9]*", "*.*.*", get_ipv4()),
-        "IPV6": re.sub("[a-zA-Z0-9]*:", "*:", get_ipv6()),
+        "IPV4": re.sub("\d*\\.\d*\\.\d*", "*.*.*", get_ipv4()),
+        "IPV6": re.sub("[a-fA-F0-9]*:", "*:", get_ipv6()),
         'Load Average': get_load_average(),
         'Process': get_process_num(),
         "System Version": get_sys_version(),
@@ -480,7 +481,7 @@ def get_state():
             COUNTRY = data['COUNTRY']
     except:
         logging.info("Former data missing or invalid.")
-        pass
+
 
 def get_command():
     if REPORT_MODE == 'redis':

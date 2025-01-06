@@ -1,5 +1,5 @@
 FROM python:3-slim
-MAINTAINER LittleJake https://github.com/LittleJake/
+LABEL org.opencontainers.image.authors="13583702+LittleJake@users.noreply.github.com"
 
 WORKDIR /usr/src/app
 
