@@ -27,7 +27,6 @@ if getattr(sys, 'frozen', False):
 load_dotenv(dotenv_path=os.path.join(extDataDir, '.env'))
 
 # get .env
-DEBUG_LEVEL = os.getenv("DEBUG_LEVEL", '20')
 HOST = os.getenv("HOST", "127.0.0.1")
 PORT = os.getenv("PORT", "6379")
 PASSWORD = os.getenv("PASSWORD", "")
@@ -49,7 +48,10 @@ SOCKET_TIMEOUT = int(os.getenv('SOCKET_TIMEOUT', "10"))
 PING_CONCURRENT = int(os.getenv('PING_CONCURRENT', "10"))
 
 
+# Logging configuration
+DEBUG_LEVEL = os.getenv('DEBUG_LEVEL', "20")  # Assuming default level is INFO
 logging.basicConfig(level=int(DEBUG_LEVEL), format="%(asctime)s - %(message)s")
+
 
 # Loading UUID
 UUID = str(uuid.uuid4()).replace("-", "")
