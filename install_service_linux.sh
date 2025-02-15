@@ -12,7 +12,7 @@ case `uname` in
 
         cat > /etc/local.d/monitor.start << EOF
 cd /usr/local/monitor/
-nohup /usr/bin/python3 /usr/local/monitor/report.py &
+nohup /usr/bin/python3 /usr/local/monitor/report.py &> /var/log/monitor.log &
 
 EOF
 
@@ -43,7 +43,7 @@ WantedBy=multi-user.target
 
 EOF
         systemctl daemon-reload
-        systemctl start monitor
+        systemctl restart monitor
         systemctl enable monitor
         }
      ;;
