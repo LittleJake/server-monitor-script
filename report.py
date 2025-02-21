@@ -18,7 +18,7 @@ import concurrent.futures
 import ping3
 import ipapi
 
-VERSION = "Alpha-2025.02.15-01"
+VERSION = "Alpha-2025.02.21-01"
 
 # get .env location for pyinstaller
 extDataDir = os.getcwd()
@@ -247,7 +247,7 @@ def get_request(url=''):
     i = 5
     while i > 0:
         try:
-            resp = requests.get(url=url, timeout=5)
+            resp = requests.get(url=url, timeout=SOCKET_TIMEOUT)
             if resp.status_code == 200:
                 return resp
         except:
