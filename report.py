@@ -18,7 +18,7 @@ import concurrent.futures
 import ping3
 import ipapi
 
-VERSION = "Alpha-2025.02.21-01"
+VERSION = "Alpha-2025.02.21-02"
 
 # get .env location for pyinstaller
 extDataDir = os.getcwd()
@@ -491,7 +491,8 @@ def get_command():
         return conn.rpop("system_monitor:command:" + UUID)
     elif REPORT_MODE == 'http':
         try:
-            return requests.get(url=SERVER_URL_COMMAND, headers={'authorization': SERVER_TOKEN}, timeout=SOCKET_TIMEOUT).json()
+            data = requests.get(url=SERVER_URL_COMMAND, headers={'authorization': SERVER_TOKEN}, timeout=SOCKET_TIMEOUT).json()
+            return data.get("command")
         except Exception as e:
             logging.error(e)
             return None
@@ -511,12 +512,18 @@ def reboot_system():
 def execute_command():
     command = get_command()
     if command is not None:
+        if type(command) == bytes:
+            command = command.decode("utf-8")
+
+        if command == "":
+            return
+
         logging.info("Executing command: %s" % command)
 
-        if command == b"reboot":
+        if command == "reboot":
             logging.info("Rebooting...")
             reboot_system()
-        elif command == b"ping":
+        elif command == "ping":
             logging.info("Pong!!")
         else:
             logging.info("Command not recognized.")
