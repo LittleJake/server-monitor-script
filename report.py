@@ -247,7 +247,7 @@ def get_request(url=''):
     i = 5
     while i > 0:
         try:
-            resp = requests.get(url=url, timeout=5)
+            resp = requests.get(url=url, timeout=SOCKET_TIMEOUT)
             if resp.status_code == 200:
                 return resp
         except:
@@ -492,8 +492,8 @@ def get_command():
         return command.decode("utf-8") if command is str else None
     elif REPORT_MODE == 'http':
         try:
-            j = requests.get(url=SERVER_URL_COMMAND, headers={'authorization': SERVER_TOKEN}, timeout=SOCKET_TIMEOUT).json()
-            return j.get("command")
+            data = requests.get(url=SERVER_URL_COMMAND, headers={'authorization': SERVER_TOKEN}, timeout=SOCKET_TIMEOUT).json()
+            return data.get("command")
         except Exception as e:
             logging.error(e)
             return None
@@ -515,6 +515,12 @@ def reboot_system():
 def execute_command():
     command = get_command()
     if command is not None:
+        if type(command) == bytes:
+            command = command.decode("utf-8")
+
+        if command == "":
+            return
+
         logging.info("Executing command: %s" % command)
 
         if command == "reboot":
