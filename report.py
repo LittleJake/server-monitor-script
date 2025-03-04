@@ -13,12 +13,12 @@ import cpuinfo
 import distro
 import platform
 from datetime import timedelta
-from dotenv import load_dotenv, find_dotenv
+from dotenv import load_dotenv
 import concurrent.futures
 import ping3
 import ipapi
 
-VERSION = "Alpha-2025.02.15-01"
+VERSION = "Alpha-2025.03.04-01"
 
 # get .env location for pyinstaller
 extDataDir = os.getcwd()
@@ -488,24 +488,28 @@ def get_state():
 
 def get_command():
     if REPORT_MODE == 'redis':
-        return conn.rpop("system_monitor:command:" + UUID)
+        command = conn.rpop("system_monitor:command:" + UUID)
+        return command.decode("utf-8") if command is str else None
     elif REPORT_MODE == 'http':
         try:
-            return requests.get(url=SERVER_URL_COMMAND, headers={'authorization': SERVER_TOKEN}, timeout=SOCKET_TIMEOUT).json()
+            j = requests.get(url=SERVER_URL_COMMAND, headers={'authorization': SERVER_TOKEN}, timeout=SOCKET_TIMEOUT).json()
+            return j.get("command")
         except Exception as e:
             logging.error(e)
             return None
 
 
 def reboot_system():
-    current_os = platform.system()
+    try:
+        current_os = platform.system()
+        if current_os == "Windows":
+            os.system("shutdown /r /t 0")
+        elif current_os == "Linux":
+                os.system("sudo reboot")
+    except:
+            raise Exception("Reboot command failed.")
     
-    if current_os == "Windows":
-        os.system("shutdown /r /t 0")
-    elif current_os == "Linux":
-        os.system("sudo reboot")
-    else:
-        raise NotImplementedError("Reboot command not implemented for this OS")
+    NotImplementedError("Reboot command not implemented for this OS")
     
 
 def execute_command():
@@ -513,35 +517,42 @@ def execute_command():
     if command is not None:
         logging.info("Executing command: %s" % command)
 
-        if command == b"reboot":
+        if command == "reboot":
             logging.info("Rebooting...")
             reboot_system()
-        elif command == b"ping":
+        elif command == "ping":
             logging.info("Pong!!")
         else:
             logging.info("Command not recognized.")
 
-# Main
+
 NET_FORMER = net_io_counters()
 IO_FORMER = disk_io_counters()
 CPU_INFO = cpuinfo.get_cpu_info()
 
-while not REPORT_ONCE:
+# Main
+def main():
+    global REPORT_ONCE, REPORT_TIME
+
+    while not REPORT_ONCE:
+        try:
+            report_once()
+            execute_command()
+        except Exception as e:
+            logging.error(e)
+            logging.error("ERROR OCCUR.")
+        time.sleep(REPORT_TIME)
+
     try:
+        get_state()
         report_once()
         execute_command()
+        save_state()
+        exit(0)
     except Exception as e:
         logging.error(e)
         logging.error("ERROR OCCUR.")
-    time.sleep(REPORT_TIME)
+        exit(1)
 
-try:
-    get_state()
-    report_once()
-    execute_command()
-    save_state()
-    exit(0)
-except Exception as e:
-    logging.error(e)
-    logging.error("ERROR OCCUR.")
-    exit(1)
+if __name__ == "__main__":
+    main()
