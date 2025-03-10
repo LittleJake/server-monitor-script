@@ -18,7 +18,7 @@ import concurrent.futures
 import ping3
 import ipapi
 
-VERSION = "Alpha-2025.03.04-01"
+VERSION = "Alpha-2025.03.11-01"
 
 # get .env location for pyinstaller
 extDataDir = os.getcwd()
@@ -362,7 +362,7 @@ def get_throughput():
 def get_uptime():
     t = int(time.time() - psutil.boot_time())
     delta = timedelta(seconds=t)
-    return str(delta)
+    return "%d Days %02d:%02d:%02d" % (delta.days, (delta.seconds//3600)%24, (delta.seconds//60)%60, delta.seconds%60)
 
 
 def get_load():
