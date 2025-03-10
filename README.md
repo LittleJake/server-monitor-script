@@ -1,5 +1,4 @@
-server-monitor-script
-=======
+# server-monitor-script
 
 <img alt="Apache 2.0" src="https://img.shields.io/github/license/LittleJake/server-monitor-script?style=for-the-badge"> <img alt="GitHub Repo stars" src="https://img.shields.io/github/stars/LittleJake/server-monitor-script?style=for-the-badge">
 
@@ -11,10 +10,9 @@ server-monitor-script
 
 可注册使用免费Redis服务器：[redislab](https://redis.com/)、[aiven.io](https://console.aiven.io/)。
 
-### 安装
+## 安装
 
-
-#### Docker
+### Docker
 
 ```bash
 git clone https://github.com/LittleJake/server-monitor-script/
@@ -32,7 +30,7 @@ docker run -v /:/rootfs:ro --name monitor -d server-monitor-script:latest
 
 ```
 
-#### Linux
+### Linux
 
 ```bash
 git clone https://github.com/LittleJake/server-monitor-script/
@@ -52,7 +50,7 @@ bash install_service_linux.sh
 
 ```
 
-#### Windows
+### Windows
 
 ```cmd
 git clone https://github.com/LittleJake/server-monitor-script/
@@ -72,19 +70,13 @@ python3 report.py
 
 ```
 
-
-### Sponsors
+## Sponsors
 
 Thanks for the amazing VM server provided by [DartNode](https://dartnode.com?via=1).
 
  <a href="https://dartnode.com?via=1"><img src="https://raw.githubusercontent.com/LittleJake/LittleJake/master/images/dartnode.png" width="150"></a>
 
-Thanks for the open source project license provided by [JetBrains](https://www.jetbrains.com/).
-
- <a href="https://www.jetbrains.com/"><img src="https://resources.jetbrains.com/storage/products/company/brand/logos/jb_beam.png" width="150" alt="JetBrains Logo (Main) logo."></a>
-
-
-### Credit
+## Credit
 
 [四网(三网)TCPping域名生成](https://mjjbb.com/p/ping)
 
