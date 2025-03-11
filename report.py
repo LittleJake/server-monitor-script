@@ -18,7 +18,7 @@ import concurrent.futures
 import ping3
 import ipapi
 
-VERSION = "Alpha-2025.03.11-01"
+VERSION = "Alpha-2025.03.11-02"
 
 # get .env location for pyinstaller
 extDataDir = os.getcwd()
@@ -212,7 +212,8 @@ def get_sys_version():
 
 
 def get_disk_partitions():
-    parts = psutil.disk_partitions(True)
+    # not to display some partitions
+    parts = psutil.disk_partitions(False)
     result = []
     for part in parts:
         try:
