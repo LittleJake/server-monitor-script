@@ -18,7 +18,7 @@ import concurrent.futures
 import ping3
 import ipapi
 
-VERSION = "Alpha-2025.03.11-02"
+VERSION = "Alpha-20250311.3-python3"
 
 # get .env location for pyinstaller
 extDataDir = os.getcwd()
