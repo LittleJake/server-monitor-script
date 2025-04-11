@@ -16,9 +16,14 @@ from datetime import timedelta
 from dotenv import load_dotenv
 import concurrent.futures
 import ping3
-import ipapi
 
-VERSION = "Alpha-20250311.3-python3"
+# Not a nice package.
+try:
+    import ipapi
+except ImportError:
+    pass
+
+VERSION = "Alpha-20250412.1-python3"
 
 # get .env location for pyinstaller
 extDataDir = os.getcwd()
