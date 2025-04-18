@@ -18,7 +18,7 @@ import concurrent.futures
 import ping3
 import ipapi
 
-VERSION = "Alpha-20250311.3-python3"
+VERSION = "Alpha-20250418.1-python3"
 
 # get .env location for pyinstaller
 extDataDir = os.getcwd()
@@ -458,7 +458,7 @@ def report_once():
             if SERVER_TOKEN == "":
                 logging.error("Please generate server token using `php think token add --uuid %s` on your central server." % UUID)
                 exit(1)
-            req = requests.post(url=SERVER_URL_HASH, data={'ip': IPV4}, headers={'authorization': SERVER_TOKEN}, timeout=SOCKET_TIMEOUT)
+            req = requests.post(url=SERVER_URL_HASH, json={'ip': IPV4}, headers={'authorization': SERVER_TOKEN}, timeout=SOCKET_TIMEOUT)
             if req.status_code != 200: raise Exception(req)
             req = requests.post(url=SERVER_URL_INFO, json=info, headers={'authorization': SERVER_TOKEN}, timeout=SOCKET_TIMEOUT)
             if req.status_code != 200: raise Exception(req)
