@@ -16,7 +16,12 @@ from datetime import timedelta
 from dotenv import load_dotenv
 import concurrent.futures
 import ping3
-import ipapi
+
+# Not a nice package.
+try:
+    import ipapi
+except ImportError:
+    pass
 
 VERSION = "Alpha-20250418.1-python3"
 
