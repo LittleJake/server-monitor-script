@@ -10,6 +10,10 @@
 
 可注册使用免费Redis服务器：[redislab](https://redis.com/)、[aiven.io](https://console.aiven.io/)。
 
+## 文档
+
+[自动化生成文档](https://deepwiki.com/LittleJake/server-monitor-script) (Powered by Deepwiki)
+
 ## 安装
 
 ### Docker
