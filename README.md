@@ -80,8 +80,3 @@ Thanks for the amazing VM server provided by [DartNode](https://dartnode.com?via
 
  <a href="https://dartnode.com?via=1"><img src="https://raw.githubusercontent.com/LittleJake/LittleJake/master/images/dartnode.png" width="150"></a>
 
-## Credit
-
-[四网(三网)TCPping域名生成](https://mjjbb.com/p/ping)
-
-[ipify API](https://ipify.org/)
