@@ -23,7 +23,7 @@ try:
 except ImportError:
     pass
 
-VERSION = "Alpha-20250604.1-python3"
+VERSION = "Alpha-202506019.1-python3"
 
 # get .env location for pyinstaller
 extDataDir = os.getcwd()
@@ -37,8 +37,8 @@ PORT = os.getenv("PORT", "6379")
 PASSWORD = os.getenv("PASSWORD", "")
 SSL = os.getenv("SSL", 'False').lower() in ('true', '1', 't')
 REPORT_ONCE = os.getenv("REPORT_ONCE", 'False').lower() in ('true', '1', 't')
-IPV4_API = os.getenv('IPV4_API', "https://api-ipv4.ip.sb/ip")
-IPV6_API = os.getenv('IPV6_API', "https://api-ipv6.ip.sb/ip")
+IPV4_API = os.getenv('IPV4_API', "https://4.ident.me/")
+IPV6_API = os.getenv('IPV6_API', "https://6.ident.me/")
 REPORT_TIME = int(os.getenv('REPORT_TIME', '60'))
 DATA_TIMEOUT = int(os.getenv('DATA_TIMEOUT', '259200'))
 RETENTION_TIME = int(os.getenv('RETENTION_TIME', '86400'))
