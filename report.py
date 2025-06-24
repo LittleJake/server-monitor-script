@@ -17,13 +17,13 @@ from dotenv import load_dotenv
 import concurrent.futures
 import ping3
 
-# Not a nice package.
-try:
-    import ipapi
-except ImportError:
-    pass
+# Not support python2
+if sys.version_info < (3, 0):
+    print("This script requires Python 3.x")
+    sys.exit(1)
 
-VERSION = "Alpha-202506019.1-python3"
+
+VERSION = "Alpha-20250624.1-python3"
 
 # get .env location for pyinstaller
 extDataDir = os.getcwd()
@@ -51,11 +51,12 @@ REPORT_MODE = os.getenv('REPORT_MODE', "redis").lower()
 SERVER_TOKEN = os.getenv('SERVER_TOKEN', "")
 SOCKET_TIMEOUT = int(os.getenv('SOCKET_TIMEOUT', "10"))
 PING_CONCURRENT = int(os.getenv('PING_CONCURRENT', "10"))
+ALIVE_CHECK_TIME = int(os.getenv('ALIVE_CHECK_TIME', "600"))
 
 
 # Logging configuration
 DEBUG_LEVEL = os.getenv('DEBUG_LEVEL', "20")  # Assuming default level is INFO
-logging.basicConfig(level=int(DEBUG_LEVEL), format="%(asctime)s - %(message)s")
+logging.basicConfig(level=int(DEBUG_LEVEL), format="%(asctime)s - [%(levelname)s] %(message)s")
 
 
 # Loading UUID
@@ -79,18 +80,24 @@ IPV4 = None
 IPV6 = None
 COUNTRY = None
 TIME = math.floor(time.time())
+
+# Set PROCFS_PATH for psutil
 psutil.PROCFS_PATH = PROCFS_PATH
 
+# Redis connection
 if REPORT_MODE == "redis":
-    conn = redis.Redis(host=HOST, password=PASSWORD, port=PORT, ssl=SSL, retry_on_timeout=SOCKET_TIMEOUT)
+    if redis.__version__ < "6.0.0":
+        conn = redis.Redis(host=HOST, password=PASSWORD, port=PORT, ssl=SSL, retry_on_timeout=SOCKET_TIMEOUT)
+    else:
+        conn = redis.Redis(host=HOST, password=PASSWORD, port=PORT, ssl=SSL, socket_connect_timeout=SOCKET_TIMEOUT, socket_timeout=SOCKET_TIMEOUT)
 
-PING_IP = {}
 # get ip.json
+PING_IP = {}
 try:
     with open("ip.json", "r") as fp:
         PING_IP = json.load(fp)
 except Exception as e:
-    logging.info("Error occur when loading ip.json, skipping")
+    logging.warning("fail to load ip.json, skipping..")
 
 
 def net_io_counters():
@@ -258,7 +265,6 @@ def get_request(url=''):
                 return resp
         except:
             i = i - 1
-
     return None
 
 
@@ -281,7 +287,7 @@ def get_ipv4():
     if IPV4 is None:
         try:
             resp = get_request(IPV4_API)
-            if resp is not None and re.match("\d*\\.\d*\\.\d*",resp.text) is not None:
+            if resp is not None and re.match(r"\d*\.\d*\.\d*",resp.text) is not None:
                 IPV4 = resp.text
             else:
                 IPV4 = "None"
@@ -295,7 +301,7 @@ def get_ipv6():
     if IPV6 is None:
         try:
             resp = get_request(IPV6_API)
-            if resp is not None and re.match("[a-fA-F0-9]*:",resp.text) is not None:
+            if resp is not None and re.match(r"[a-fA-F0-9]*:",resp.text) is not None:
                 IPV6 = resp.text
             else:
                 IPV6 = "None"
@@ -308,14 +314,10 @@ def get_country_ipapi1():
     
     if COUNTRY is None:
         try:
-            j = ipapi.location(options={"timeout": SOCKET_TIMEOUT})
-        except Exception as e: 
+            j = get_request("https://ip-api.io/json").json()
+        except Exception as e:
             logging.error(e)
-            try:
-                j = get_request("https://ip-api.io/json").json()
-            except Exception as e:
-                logging.error(e)
-                return None
+            return None
         
         if j is not None:
             if j["country_name"] in ("Hong Kong", "Macao"):
@@ -395,6 +397,7 @@ def get_aggregate_stat_json():
 
 
 def get_aggregate_stat():
+    """Get aggregate system information"""
     info = {
         'Battery': get_battery(),
         'Disk': get_disk_info(),
@@ -411,32 +414,20 @@ def get_aggregate_stat():
 
 
 def report_once():
-    """ip"""
+    """Report system information once"""
     global IP, TIME
     logging.info("Reporting...")
     IP = get_ipv4()
     TIME = time.time()
     COUNTRY = get_country()
-    logging.debug("{}x {}".format(get_cpu_core(), get_cpu_name()))
-    logging.debug(get_sys_version())
-    logging.debug(re.sub("\d*\\.\d*\\.\d*", "*.*.*", get_ipv4()))
-    logging.debug(re.sub("[a-fA-F0-9]*:", "*:", get_ipv6()))
-    logging.debug(get_uptime())
-    logging.debug(get_connections())
-    logging.debug(get_process_num())
-    logging.debug(get_load_average())
-    logging.debug(TIME)
-    logging.debug(COUNTRY[0])
-    logging.debug(COUNTRY[1])
-    logging.debug(get_throughput())
 
     info = {
         'Connection': get_connections(),
         "Country": COUNTRY[0],
         "Country Code": COUNTRY[1],
         "CPU": "{}x {}".format(get_cpu_core(), get_cpu_name()),
-        "IPV4": re.sub("\d*\\.\d*\\.\d*", "*.*.*", get_ipv4()),
-        "IPV6": re.sub("[a-fA-F0-9]*:", "*:", get_ipv6()),
+        "IPV4": re.sub(r"\d*\.\d*\.\d*", "*.*.*", get_ipv4()),
+        "IPV6": re.sub(r"[a-fA-F0-9]*:", "*:", get_ipv6()),
         'Load Average': get_load_average(),
         'Process': get_process_num(),
         "System Version": get_sys_version(),
@@ -445,6 +436,8 @@ def report_once():
         'Uptime': get_uptime(),
         "Agent Version": VERSION
     }
+
+    logging.debug("Reporting info: %s" % info)
     
     if REPORT_MODE == 'redis':
         with conn.pipeline(transaction=False) as pipeline:
@@ -475,12 +468,14 @@ def report_once():
     logging.info("Finish Reporting!")
 
 def save_state():
+    """Save former data to dump file"""
     global NET_FORMER, IO_FORMER, COUNTRY
     with open("dump", "w") as fp:
         fp.write(json.dumps({'NET_FORMER': NET_FORMER,'IO_FORMER': IO_FORMER, 'COUNTRY': COUNTRY}))
        
 
-def get_state():
+def get_former_state():
+    """Get former data from dump file"""
     global NET_FORMER, IO_FORMER, COUNTRY
     try:
         with open("dump", "r") as fp:
@@ -493,6 +488,7 @@ def get_state():
 
 
 def get_command():
+    """Get command from Redis or HTTP API"""
     if REPORT_MODE == 'redis':
         command = conn.rpop("system_monitor:command:" + UUID)
         return command.decode("utf-8") if command is str else None
@@ -506,12 +502,13 @@ def get_command():
 
 
 def reboot_system():
+    """Reboot the system"""
     try:
         current_os = platform.system()
         if current_os == "Windows":
             os.system("shutdown /r /t 0")
         elif current_os == "Linux":
-                os.system("sudo reboot")
+            os.system("sudo reboot now")
     except:
             raise Exception("Reboot command failed.")
     
@@ -519,6 +516,7 @@ def reboot_system():
     
 
 def execute_command():
+    """Execute command from Redis or HTTP API"""
     command = get_command()
     if command is not None:
         if type(command) == bytes:
@@ -537,6 +535,16 @@ def execute_command():
         else:
             logging.info("Command not recognized.")
 
+def set_alive():
+    """Set alive status in Redis"""
+    if REPORT_MODE == "redis":
+        conn.set("system_monitor:alive:" + UUID, 1, ex=ALIVE_CHECK_TIME)
+    # elif REPORT_MODE == "http":
+    #     try:
+    #         requests.post(url=SERVER_URL + "/api/report/alive/" + UUID, headers={'authorization': SERVER_TOKEN}, timeout=SOCKET_TIMEOUT)
+    #     except Exception as e:
+    #         logging.error(e)
+
 
 NET_FORMER = net_io_counters()
 IO_FORMER = disk_io_counters()
@@ -552,18 +560,16 @@ def main():
             execute_command()
         except Exception as e:
             logging.error(e)
-            logging.error("ERROR OCCUR.")
         time.sleep(REPORT_TIME)
 
     try:
-        get_state()
+        get_former_state()
         report_once()
         execute_command()
         save_state()
         exit(0)
     except Exception as e:
         logging.error(e)
-        logging.error("ERROR OCCUR.")
         exit(1)
 
 if __name__ == "__main__":
