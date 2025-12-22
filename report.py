@@ -263,6 +263,7 @@ def get_request(url=''):
             resp = requests.get(url=url, timeout=SOCKET_TIMEOUT)
             if resp.status_code == 200:
                 return resp
+            i = i - 1
         except:
             i = i - 1
     return None
