@@ -23,7 +23,7 @@ if sys.version_info < (3, 0):
     sys.exit(1)
 
 
-VERSION = "Alpha-20250624.1-python3"
+VERSION = "Alpha-20260805.1-python3"
 
 # get .env location for pyinstaller
 extDataDir = os.getcwd()
@@ -465,7 +465,8 @@ def report_once():
             if req.status_code != 200: raise Exception(req)
         except Exception as e:
             raise Exception("[HTTP%d]: %s, %s" % (e.args[0].status_code, e.args[0].text, e.args[0].url))
-
+    
+    set_alive()
     logging.info("Finish Reporting!")
 
 def save_state():
